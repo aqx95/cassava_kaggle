@@ -11,89 +11,178 @@ class Fitter():
         self.device = device
         self.config = config
 
-        self.loss = nn.CrossEntropyLoss()
+        self.best_acc = 0
+        self.best_loss = np.inf
+        self.monitored_metrics = None
+
+        self.loss = getattr(torch.nn, config.criterion)(**config.criterion_params[config.criterion])
         self.scaler = GradScaler()
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=self.config['optimizer']['lr'],
-                                        weight_decay=self.config['optimizer']['weight_decay'])
+        self.optimizer = getattr(torch.optim, config.optimizer)(self.model.parameters(),
+                                **config.optimizer_params[config.optimizer])
 
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(self.optimizer, T_0=10, T_mult=1,
-                                                                            eta_min=self.config['optimizer']['min_lr'], last_epoch=-1)
-        self.scheduler = None
+        self.scheduler = getattr(torch.optim.lr_scheduler, config.scheduler)(optimizer=self.optimizer,
+                                **config.scheduler_params[config.scheduler])
 
-    def fit(self, train_loader, valid_loader):
-        for epoch in range(self.config['train']['epochs']):
-            self.train_epoch(epoch, train_loader)
-            with torch.no_grad():
-              self.valid_epoch(epoch, valid_loader)
+        self.log("Fitter Class prepared. Training with {} \n".format(self.device))
+
+    def fit(self, train_loader, valid_loader, fold):
+        self.log('Training on Fold {} with {} \n'.format(fold, config.model_name))
+
+        for epoch in range(config.num_epochs):
+            #get lr
+            lr = self.optimizer.param_groups[0]['lr']
+            timestamp = datetime.datetime.now(pytz.timezone("Asia/Singapore")).strftime("%Y-%m-%d %H-%M-%S")
+            self.log('{}\nLR: {}\n'.format(timestamp,lr))
+
+            ##Training
+            start_time = time.time()
+            avg_train_loss, avg_train_acc = self.train_epoch(epoch, train_loader)
+            end_time = time.time()
+
+            train_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(train_end_time - train_start_time))
+            self.log("[RESULT]: Train. Epoch {} | Avg Train Summary Loss: {:.6f} | "
+                    "Time Elapsed: {}".format(epoch + 1, avg_train_loss, train_elapsed_time))
+
+            ##Validation
+            start_time = time.time()
+            avg_val_loss, avg_val_acc, val_pred = self.valid_epoch(epoch, valid_loader)
+            end_time = time.time()
+
+            val_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(val_end_time - val_start_time))
+            self.log("[RESULT]: Validation. Epoch: {} | " "Avg Validation Summary Loss: {:.6f} | "
+                     "Validation Accuracy: {:.6f} | Time Elapsed: {}".format(
+                     epoch + 1, avg_val_loss, avg_val_acc_score, val_elapsed_time))
+
+            self.monitored_metrics = avg_val_acc_score
+
+            if self.best_loss > avg_val_loss:
+                self.best_loss = avg_best_loss
+
+            if self.best_acc < avg_val_acc:
+                self.best_acc = avg_val_acc
+                self.save(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
+                        self.config.model_name, fold))
+
+            if self.config.val_step_scheduler:
+                if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    self.scheduler.step(self.monitored_metrics)
+                else:
+                    self.scheduler.step()
+
+        fold_best_checkpoint = self.load(os.path.join(self.config.paths["save_path"],
+                                '{}_fold{}.pt').format(self.config.model_name, fold))
+
+        return fold_bext_checkpoint
 
 
     def train_epoch(self, epoch, train_loader):
-        self.model.train()
+        self.model.train
 
-        running_loss = None
+        summary_loss = AvergaeLossMeter()
+
+        start_time = time.time()
+
         pbar = tqdm(enumerate(train_loader), total=len(train_loader))
-
         for step, (imgs, image_labels) in pbar:
-            imgs, image_labels =  imgs.to(self.device).float(), image_labels.to(self.device).long()
+            imgs, image_labels =  imgs.to(self.device).float(), image_labels.to(self.device)
+            batch_size = image_labels.shape[0]
             with autocast():
                 image_preds = self.model(imgs)
                 loss = self.loss(image_preds, image_labels)
 
+            summary_loss.update(loss.item(), batch_size)
             self.scaler.scale(loss).backward()
 
-            if running_loss is None:
-                running_loss = loss.item()
-            else:
-                running_loss = running_loss*.99 + loss.item()*0.01
-
-            if ((step+1) % self.config['train']['accum_iter'] == 0 or (step+1) == len(train_loader)):
+            if ((step+1) % self.config.accum_iter == 0 or (step+1) == len(train_loader)):
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 self.optimizer.zero_grad()
 
-                if self.scheduler is not None and self.config['scheduler']['schd_batch_update']:
+                if self.config.train_step_scheduler:
                     self.scheduler.step()
 
-            if ((step + 1) % self.config['verbose_step'] == 0) or ((step + 1) == len(train_loader)):
-                description = f'epoch {epoch} loss: {running_loss:.4f}'
-                pbar.set_description(description)
+            end_time = time.time()
+            if self.config.verbose:
+                if (step % self.config.verbose_step) == 0:
+                    description = f"Train Steps {step}/{len(train_loader)}, \
+                                summary_loss: {summary_loss.avg:.3f}, \
+                                time: {(end_time - start_time):.3f}"
+                    pbar.set_description(description)
 
-        if self.scheduler is not None and not self.config['scheduler']['schd_batch_update']:
-          scheduler.step()
+        return summary_loss.avg
+
 
 
     def valid_epoch(self, epoch, valid_loader):
         self.model.eval()
-        loss_sum = 0
-        sample_num = 0
-        image_preds_all = []
-        image_targets_all = []
+        summary_loss = AverageLossMeter()
+        accuracy_scores = AccuracyMeter()
+
+        start_time = time.time()
+        val_gt_label_list, val_preds_softmax_list, val_preds_argmax_list = [], [], []
 
         pbar = tqdm(enumerate(valid_loader), total=len(valid_loader))
-        for step, (imgs, image_labels) in pbar:
-            imgs = imgs.to(self.device).float()
-            image_labels = image_labels.to(self.device).long()
+        with torch.no_grad():
+            for step, (imgs, image_labels) in pbar:
+                imgs = imgs.to(self.device).float()
+                image_labels = image_labels.to(self.device).long()
+                batch_size = image_labels.shape[0]
 
-            image_preds = self.model(imgs)   #output = model(input)
-            #print(image_preds.shape, exam_pred.shape)
-            image_preds_all += [torch.argmax(image_preds, 1).detach().cpu().numpy()]
-            image_targets_all += [image_labels.detach().cpu().numpy()]
+                image_preds = self.model(imgs)
+                loss = self.loss(image_preds, image_labels)
+                summary_loss.update(loss.item(), batch_size)
 
-            loss = self.loss(image_preds, image_labels)
+                y_true = image_labels.cpu().numpy()
+                softmax_preds = torch.nn.Softmax(dim=1)(input=image_preds).to("cpu").numpy()
+                y_preds = np.argmax(a=softmax_preds, axis=1)
+                accuracy_scores.update(y_true, y_preds, batch_size=batch_size)
+                val_gt_label_list.append(y_true)
+                val_preds_softmax_list.append(softmax_preds)
+                val_preds_argmax_list.append(y_preds)
+                end_time = time.time()
 
-            loss_sum += loss.item()*image_labels.shape[0]
-            sample_num += image_labels.shape[0]
+                if config.verbose:
+                    if (step % config.verbose_step) == 0:
+                        description = f"Validation Steps {step}/{len(val_loader)}, \
+                                    summary_loss: {summary_loss.avg:.3f},\
+                                    val_acc: {accuracy_scores.avg:.6f} time: {(end_time - start_time):.3f}"
+                        pbar.set_description(description)
 
-            if ((step + 1) % self.config['verbose_step'] == 0) or ((step + 1) == len(valid_loader)):
-                description = f'epoch {epoch} loss: {loss_sum/sample_num:.4f}'
-                pbar.set_description(description)
+            val_gt_label_array  = np.concatenate(val_gt_label_list, axis=0)
+            val_preds_softmax_array = np.concatenate(val_preds_softmax_list, axis=0)
+            val_preds_argmax_array = np.concatenate(val_preds_argmax_list,axis=0)
 
-        image_preds_all = np.concatenate(image_preds_all)
-        image_targets_all = np.concatenate(image_targets_all)
-        print('validation multi-class accuracy = {:.4f}'.format((image_preds_all==image_targets_all).mean()))
 
-        if self.scheduler is not None:
-            if config['scheduler']['schd_loss_update']:
-                self.scheduler.step(loss_sum/sample_num)
-            else:
-                self.scheduler.step()
+        return summary_loss.avg, accuracy_scores.avg, val_preds_softmax_array
+
+
+    def save(self, path):
+        """Save the weight for the best evaluation loss."""
+        self.model.eval()
+        torch.save(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "scheduler_state_dict": self.scheduler.state_dict(),
+                "best_acc": self.best_acc,
+                "best_auc": self.best_auc,
+                "best_loss": self.best_loss,
+                "epoch": self.epoch,
+                "oof_preds": self.val_predictions,
+            },
+            path,
+        )
+
+
+    def load(self, path):
+        """Load a model checkpoint from the given path."""
+        checkpoint = torch.load(path)
+        return checkpoint
+
+
+    def log(self, message):
+        """Log a message."""
+        if self.config.verbose:
+            print(message)
+        with open(self.config.paths['log_path'], "a+") as logger:
+            logger.write(f"{message}\n")
