@@ -221,7 +221,7 @@ def get_valid_transforms():
 
 class CassavaImgClassifier(nn.Module):
     def __init__(self, model_arch, n_class, pretrained=False):
-        super().__init___()
+        super().__init__()
         self.model = timm.create_model(model_arch, pretrained=pretrained)
         n_features = self.model.classifier.in_features
         self.model.classifier = nn.Linear(n_features, n_class)
@@ -273,28 +273,28 @@ def train_one_epoch(epoch, model, loss_fn, optimizer, train_loader, device,
         imgs = imgs.to(device).float()
         image_labels = image_labels.to(device).long()
 
-        with autocast():
+        with autocast(): #only wrap forward pass (with loss calc) with autocast
             image_preds = model(imgs)
-            loss = loss_fn(image_preds, imgae_labels)
+            loss = loss_fn(image_preds, image_labels)
 
-            scaler.scale(loss).backward()
+        scaler.scale(loss).backward()
 
-            if running_loss is None:
-                running_loss = loss.item()
-            else:
-                running_loss = running_loss*.99 + loss.item()*0.01
+        if running_loss is None:
+            running_loss = loss.item()
+        else:
+            running_loss = running_loss*.99 + loss.item()*0.01
 
-            if ((step+1) % CFG['accum_iter'] == 0 or (step+1) == len(train_loader)):
-                scaler.step(optimizer)
-                scaler.update()
-                optimizer.zero_grad()
+        if ((step+1) % CFG['accum_iter'] == 0 or (step+1) == len(train_loader)):
+            scaler.step(optimizer)
+            scaler.update()
+            optimizer.zero_grad()
 
-                if scheduler is not None and schd_batch_update:
-                    scheduler.step()
+            if scheduler is not None and schd_batch_update:
+                scheduler.step()
 
-            if ((step + 1) % CFG['verbose_step'] == 0) or ((step + 1) == len(train_loader)):
-                description = f'epoch {epoch} loss: {running_loss:.4f}'
-                pbar.set_description(description)
+        if ((step + 1) % CFG['verbose_step'] == 0) or ((step + 1) == len(train_loader)):
+            description = f'epoch {epoch} loss: {running_loss:.4f}'
+            pbar.set_description(description)
 
     if scheduler is not None and not schd_batch_update:
         scheduler.step()
@@ -390,8 +390,8 @@ if __name__ == '__main__':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=CFG['T_0'], T_mult=1,
                                                                         eta_min=CFG['min_lr'], last_epoch=-1)
 
-        loss_tr = MyCrossEntropyLoss().to(device)
-        loss_fn = MyCrossEntropyLoss().to(device)
+        loss_tr = nn.CrossEntropyLoss().to(device)
+        loss_fn = nn.CrossEntropyLoss().to(device)
 
         for epoch in range(CFG['epochs']):
             train_one_epoch(epoch, model, loss_tr, optimizer, train_loader, device,
