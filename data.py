@@ -1,7 +1,16 @@
 from commons import *
+from torch.utils.data import Dataset,DataLoader
+from albumentations import (
+    HorizontalFlip, VerticalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
+    Transpose, ShiftScaleRotate, Blur, OpticalDistortion, GridDistortion, HueSaturationValue,
+    IAAAdditiveGaussianNoise, GaussNoise, MotionBlur, MedianBlur, IAAPiecewiseAffine, RandomResizedCrop,
+    IAASharpen, IAAEmboss, RandomBrightnessContrast, Flip, OneOf, Compose, Normalize, Cutout, CoarseDropout, ShiftScaleRotate, CenterCrop, Resize
+)
+
+from albumentations.pytorch import ToTensorV2
 
 class CassavaDataset(Dataset):
-    def __init__(self, df, data_root,
+    def __init__(self, df, data_root, config,
                 transforms=None,
                 output_label=True,
                 one_hot_label=False,
@@ -9,7 +18,7 @@ class CassavaDataset(Dataset):
                 fmix_params={
                     'alpha': 1.,
                      'decay_power': 3.,
-                     'shape': (CFG['img_size'], CFG['img_size']),
+                     'shape': (512, 512),
                      'max_soft': True,
                      'reformulate': False
                 },
@@ -69,7 +78,7 @@ class CassavaDataset(Dataset):
                 img = mask_torch*img + (1.-mask_torch)*fmix_img
 
                 #mix target
-                rate = mask.sum()/CFG['img_size']/CFG['img_size']
+                rate = mask.sum()/config['img_size']/config['img_size']
                 target = rate*target + (1.-rate)*self.labels[fmix_ix]
 
         if self.do_cutmix and np.random.uniform(0,1,size=1)[0] > 0.5:
@@ -83,10 +92,10 @@ class CassavaDataset(Dataset):
                 lam = np.clip(np.random.beta(self.cutmix_params['alpha'],
                                 self.cutmix_params['alpha']),0.3,0.4)
 
-                bbx1, bby1, bbx2, bby2 = rand_bbox((CFG['img_size'], CFG['img_size']), lam)
+                bbx1, bby1, bbx2, bby2 = rand_bbox((config['img_size'], config['img_size']), lam)
                 img[:, bbx1:bbx2, bby1:bby2] = cmix_img[:, bbx1:bbx2, bby1:bby2]
 
-                rate = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (CFG['img_size'] * CFG['img_size']))
+                rate = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (config['img_size'] * config['img_size']))
                 target = rate*target + (1.-rate)*self.labels[cmix_ix]
 
         #do label smoothing (add)
@@ -96,9 +105,9 @@ class CassavaDataset(Dataset):
             return img
 
 
-def get_train_transforms():
+def get_train_transforms(config):
     return Compose([
-            RandomResizedCrop(CFG['img_size'], CFG['img_size']),
+            RandomResizedCrop(config['img_size'], config['img_size']),
             Transpose(p=0.5),
             HorizontalFlip(p=0.5),
             VerticalFlip(p=0.5),
@@ -111,36 +120,36 @@ def get_train_transforms():
             ToTensorV2(p=1.0),
         ], p=1.)
 
-def get_valid_transforms():
+def get_valid_transforms(config):
     return Compose([
-            CenterCrop(CFG['img_size'], CFG['img_size'], p=1.),
-            Resize(CFG['img_size'], CFG['img_size']),
+            CenterCrop(config['img_size'], config['img_size'], p=1.),
+            Resize(config['img_size'], config['img_size']),
             Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0, p=1.0),
             ToTensorV2(p=1.0),
         ], p=1.)
 
 
-def prepare_dataloader(df, trn_idx, val_idx, data_root='cassava-leaf-disease-classification/train_images/'):
+def prepare_dataloader(df, config, trn_idx, val_idx, data_root='cassava-leaf-disease-classification/train_images/'):
     train_ = df.loc[trn_idx,:].reset_index(drop=True)
     valid_ = df.loc[val_idx,:].reset_index(drop=True)
 
-    train_ds = CassavaDataset(train_, data_root, transforms=get_train_transforms(),
+    train_ds = CassavaDataset(train_, data_root, config, transforms=get_train_transforms(config),
                 output_label=True, one_hot_label=False, do_fmix=False, do_cutmix=False)
-    valid_ds = CassavaDataset(valid_, data_root, transforms=get_valid_transforms(),
+    valid_ds = CassavaDataset(valid_, data_root, config, transforms=get_valid_transforms(config),
                 output_label=True)
 
     train_loader = torch.utils.data.DataLoader(
         train_ds,
-        batch_size=CFG['train_bs'],
+        batch_size=config['data']['train_batch'],
         pin_memory=False,
         drop_last=False,
         shuffle=True,
-        num_workers=CFG['num_workers'])
+        num_workers=3)
 
     val_loader = torch.utils.data.DataLoader(
         valid_ds,
-        batch_size=CFG['valid_bs'],
-        num_workers=CFG['num_workers'],
+        batch_size=config['data']['valid_batch'],
+        num_workers=4,
         shuffle=False,
         pin_memory=False)
 

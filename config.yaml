@@ -21,3 +21,4 @@ optimizer:
   weight_decay: 1e-6
 
 verbose_step: 1
+img_size: 512

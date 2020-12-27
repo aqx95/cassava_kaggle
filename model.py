@@ -1,3 +1,6 @@
+import timm
+import torch.nn as nn
+
 class CassavaImgClassifier(nn.Module):
     def __init__(self, model_arch, n_class, pretrained=False):
         super().__init__()

@@ -1,3 +1,9 @@
+import torch
+import torch.nn as nn
+from tqdm import tqdm
+import numpy as np
+
+from torch.cuda.amp import autocast, GradScaler
 
 class Fitter():
     def __init__(self, model, device, config):
@@ -16,11 +22,12 @@ class Fitter():
 
     def fit(self, train_loader, valid_loader):
         for epoch in range(self.config['train']['epochs']):
-            train_epoch(train_loader)
-            valid_epoch(valid_loader)
+            self.train_epoch(epoch, train_loader)
+            with torch.no_grad():
+              self.valid_epoch(epoch, valid_loader)
 
 
-    def train_epoch(self, train_loader):
+    def train_epoch(self, epoch, train_loader):
         self.model.train()
 
         running_loss = None
@@ -29,7 +36,7 @@ class Fitter():
         for step, (imgs, image_labels) in pbar:
             imgs, image_labels =  imgs.to(self.device).float(), image_labels.to(self.device).long()
             with autocast():
-                image_preds = model(imgs)
+                image_preds = self.model(imgs)
                 loss = self.loss(image_preds, image_labels)
 
             self.scaler.scale(loss).backward()
@@ -52,10 +59,11 @@ class Fitter():
                 pbar.set_description(description)
 
         if self.scheduler is not None and not self.config['scheduler']['schd_batch_update']:
-        scheduler.step()
+          scheduler.step()
 
 
-    def valid_epoch(self, valid_loader):
+    def valid_epoch(self, epoch, valid_loader):
+        self.model.eval()
         loss_sum = 0
         sample_num = 0
         image_preds_all = []
