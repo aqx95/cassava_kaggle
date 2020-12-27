@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import yaml
 
+import sklearn
 import torch.nn.functional as F
 from glob import glob
 from skimage import io
@@ -13,13 +14,13 @@ from catalyst.data.sampler import BalanceClassSampler
 
 from torch.nn.modules.loss import _WeightedLoss
 from sklearn.model_selection import GroupKFold, StratifiedKFold
-from sklearn.metrics import roc_auc_score, log_loss
+
 
 from data import prepare_dataloader
 from trainer import Fitter
 from commons import seed_everything
 from model import CassavaImgClassifier
-
+from config import GlobalConfig
 
 def load_config(config_name):
     with open(config_name) as file:
@@ -112,7 +113,7 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
 
 ###MAIN LOOP
 if __name__ == '__main__':
-    config = load_config('config.yaml')
+    config = GlobalConfig
     seed_everything(config.seed)
 
     train_csv = pd.read_csv(config.paths['csv_path'])

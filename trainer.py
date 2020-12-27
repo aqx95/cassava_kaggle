@@ -4,6 +4,7 @@ from tqdm import tqdm
 import numpy as np
 
 from torch.cuda.amp import autocast, GradScaler
+from meter import AverageLossMeter, AccuracyMeter
 
 class Fitter():
     def __init__(self, model, device, config):
