@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 import numpy as np
+import datetime
+import time
+import pytz
 
 from torch.cuda.amp import autocast, GradScaler
 from meter import AverageLossMeter, AccuracyMeter
@@ -27,9 +30,9 @@ class Fitter():
         self.log("Fitter Class prepared. Training with {} \n".format(self.device))
 
     def fit(self, train_loader, valid_loader, fold):
-        self.log('Training on Fold {} with {} \n'.format(fold, config.model_name))
+        self.log('Training on Fold {} with {} \n'.format(fold, self.config.model_name))
 
-        for epoch in range(config.num_epochs):
+        for epoch in range(self.config.num_epochs):
             #get lr
             lr = self.optimizer.param_groups[0]['lr']
             timestamp = datetime.datetime.now(pytz.timezone("Asia/Singapore")).strftime("%Y-%m-%d %H-%M-%S")
@@ -37,10 +40,10 @@ class Fitter():
 
             ##Training
             start_time = time.time()
-            avg_train_loss, avg_train_acc = self.train_epoch(epoch, train_loader)
+            avg_train_loss = self.train_epoch(epoch, train_loader)
             end_time = time.time()
 
-            train_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(train_end_time - train_start_time))
+            train_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(end_time - start_time))
             self.log("[RESULT]: Train. Epoch {} | Avg Train Summary Loss: {:.6f} | "
                     "Time Elapsed: {}".format(epoch + 1, avg_train_loss, train_elapsed_time))
 
@@ -49,10 +52,10 @@ class Fitter():
             avg_val_loss, avg_val_acc, val_pred = self.valid_epoch(epoch, valid_loader)
             end_time = time.time()
 
-            val_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(val_end_time - val_start_time))
+            val_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(end_time - start_time))
             self.log("[RESULT]: Validation. Epoch: {} | " "Avg Validation Summary Loss: {:.6f} | "
                      "Validation Accuracy: {:.6f} | Time Elapsed: {}".format(
-                     epoch + 1, avg_val_loss, avg_val_acc_score, val_elapsed_time))
+                     epoch + 1, avg_val_loss, avg_val_acc, val_elapsed_time))
 
             self.monitored_metrics = avg_val_acc_score
 
@@ -79,7 +82,7 @@ class Fitter():
     def train_epoch(self, epoch, train_loader):
         self.model.train
 
-        summary_loss = AvergaeLossMeter()
+        summary_loss = AverageLossMeter()
 
         start_time = time.time()
 
@@ -105,9 +108,7 @@ class Fitter():
             end_time = time.time()
             if self.config.verbose:
                 if (step % self.config.verbose_step) == 0:
-                    description = f"Train Steps {step}/{len(train_loader)}, \
-                                summary_loss: {summary_loss.avg:.3f}, \
-                                time: {(end_time - start_time):.3f}"
+                    description = f"Train Steps {step}/{len(train_loader)} summary_loss: {summary_loss.avg:.3f}, time: {(end_time - start_time):.3f}"
                     pbar.set_description(description)
 
         return summary_loss.avg
@@ -142,8 +143,8 @@ class Fitter():
                 val_preds_argmax_list.append(y_preds)
                 end_time = time.time()
 
-                if config.verbose:
-                    if (step % config.verbose_step) == 0:
+                if self.config.verbose:
+                    if (step % self.config.verbose_step) == 0:
                         description = f"Validation Steps {step}/{len(val_loader)}, \
                                     summary_loss: {summary_loss.avg:.3f},\
                                     val_acc: {accuracy_scores.avg:.6f} time: {(end_time - start_time):.3f}"

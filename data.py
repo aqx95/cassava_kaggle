@@ -4,6 +4,7 @@ import pandas as pd
 from commons import *
 from torch.utils.data import Dataset,DataLoader
 
+
 from albumentations import (
     HorizontalFlip, VerticalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
     Transpose, ShiftScaleRotate, Blur, OpticalDistortion, GridDistortion, HueSaturationValue,
@@ -16,14 +17,13 @@ from albumentations.pytorch import ToTensorV2
 class CassavaDataset(Dataset):
     def __init__(self,
                 df: pd.DataFrame,
-                data_root,
                 config,
                 transforms=None,
                 output_label=True):
 
         self.df = df
         self.transforms = transforms
-        self.data_root = data_root
+        self.config = config
         self.output_label = output_label
 
         if output_label == True:
@@ -37,7 +37,7 @@ class CassavaDataset(Dataset):
         if self.output_label:
             target = self.labels[index]
 
-        img_path = os.path.join(self.data_root, self.df.loc[index]['image_id'])
+        img_path = os.path.join(self.config.paths['train_path'], self.df.loc[index]['image_id'])
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -53,7 +53,7 @@ class CassavaDataset(Dataset):
 
 def get_train_transforms(config):
     return Compose([
-            RandomResizedCrop(config['img_size'], config['img_size']),
+            RandomResizedCrop(config.image_size, config.image_size),
             Transpose(p=0.5),
             HorizontalFlip(p=0.5),
             VerticalFlip(p=0.5),
@@ -68,8 +68,8 @@ def get_train_transforms(config):
 
 def get_valid_transforms(config):
     return Compose([
-            CenterCrop(config['img_size'], config['img_size'], p=1.),
-            Resize(config['img_size'], config['img_size']),
+            CenterCrop(config.image_size, config.image_size, p=1.),
+            Resize(config.image_size, config.image_size),
             Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0, p=1.0),
             ToTensorV2(p=1.0),
         ], p=1.)
