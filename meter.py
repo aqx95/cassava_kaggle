@@ -1,3 +1,5 @@
+import sklearn
+
 class AverageLossMeter:
     """
     Computes and stores the average and current loss

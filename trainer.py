@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -16,8 +17,13 @@ class Fitter():
         self.config = config
 
         self.best_acc = 0
+        self.epoch = 0
         self.best_loss = np.inf
         self.monitored_metrics = None
+        self.val_predictions = None
+
+        if not os.path.exists(self.config.paths['save_path']):
+          os.makedirs(self.config.paths['save_path'])
 
         self.loss = getattr(torch.nn, config.criterion)(**config.criterion_params[config.criterion])
         self.scaler = GradScaler()
@@ -57,10 +63,12 @@ class Fitter():
                      "Validation Accuracy: {:.6f} | Time Elapsed: {}".format(
                      epoch + 1, avg_val_loss, avg_val_acc, val_elapsed_time))
 
-            self.monitored_metrics = avg_val_acc_score
+            self.val_predictions = val_pred
+            self.monitored_metrics = avg_val_acc
+
 
             if self.best_loss > avg_val_loss:
-                self.best_loss = avg_best_loss
+                self.best_loss = avg_val_loss
 
             if self.best_acc < avg_val_acc:
                 self.best_acc = avg_val_acc
@@ -73,10 +81,12 @@ class Fitter():
                 else:
                     self.scheduler.step()
 
+            self.epoch += 1
+
         fold_best_checkpoint = self.load(os.path.join(self.config.paths["save_path"],
                                 '{}_fold{}.pt').format(self.config.model_name, fold))
 
-        return fold_bext_checkpoint
+        return fold_best_checkpoint
 
 
     def train_epoch(self, epoch, train_loader):
@@ -145,7 +155,7 @@ class Fitter():
 
                 if self.config.verbose:
                     if (step % self.config.verbose_step) == 0:
-                        description = f"Validation Steps {step}/{len(val_loader)}, \
+                        description = f"Validation Steps {step}/{len(valid_loader)}, \
                                     summary_loss: {summary_loss.avg:.3f},\
                                     val_acc: {accuracy_scores.avg:.6f} time: {(end_time - start_time):.3f}"
                         pbar.set_description(description)
