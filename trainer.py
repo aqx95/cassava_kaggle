@@ -7,6 +7,7 @@ import datetime
 import time
 import pytz
 
+from loss import loss_fn
 from torch.cuda.amp import autocast, GradScaler
 from meter import AverageLossMeter, AccuracyMeter
 
@@ -23,12 +24,11 @@ class Fitter():
         self.val_predictions = None
 
         if not os.path.exists(self.config.paths['save_path']):
-          os.makedirs(self.config.paths['save_path'])
+            os.makedirs(self.config.paths['save_path'])
 
-        self.loss = getattr(torch.nn, config.criterion)(**config.criterion_params[config.criterion])
+        self.loss = loss_fn(config.criterion, config)
         self.scaler = GradScaler()
-        self.optimizer = getattr(torch.optim, config.optimizer)(self.model.parameters(),
-                                **config.optimizer_params[config.optimizer])
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-6)
 
         self.scheduler = getattr(torch.optim.lr_scheduler, config.scheduler)(optimizer=self.optimizer,
                                 **config.scheduler_params[config.scheduler])
@@ -66,7 +66,6 @@ class Fitter():
             self.val_predictions = val_pred
             self.monitored_metrics = avg_val_acc
 
-
             if self.best_loss > avg_val_loss:
                 self.best_loss = avg_val_loss
 
@@ -91,7 +90,6 @@ class Fitter():
 
     def train_epoch(self, epoch, train_loader):
         self.model.train
-
         summary_loss = AverageLossMeter()
 
         start_time = time.time()
@@ -177,7 +175,6 @@ class Fitter():
                 "optimizer_state_dict": self.optimizer.state_dict(),
                 "scheduler_state_dict": self.scheduler.state_dict(),
                 "best_acc": self.best_acc,
-                "best_auc": self.best_auc,
                 "best_loss": self.best_loss,
                 "epoch": self.epoch,
                 "oof_preds": self.val_predictions,

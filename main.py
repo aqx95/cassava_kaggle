@@ -10,24 +10,21 @@ import sklearn
 import torch.nn.functional as F
 from glob import glob
 from skimage import io
-from scipy.ndimage.interpolation import zoom
-from catalyst.data.sampler import BalanceClassSampler
 
-from torch.nn.modules.loss import _WeightedLoss
 from sklearn.model_selection import GroupKFold, StratifiedKFold
-from torch.utils.data import Dataset,DataLoader
 
-
-from data import CassavaDataset, get_valid_transforms, get_train_transforms
+from data import prepare_dataloader
 from trainer import Fitter
 from model import CassavaImgClassifier
 from config import GlobalConfig
+
 
 def load_config(config_name):
     with open(config_name) as file:
         config = yaml.safe_load(file)
 
     return config
+
 
 def seed_everything(seed):
     random.seed(seed)
@@ -37,6 +34,7 @@ def seed_everything(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
+
 
 def make_folds(train_csv, config):
     df_folds = train_csv.copy()
@@ -54,17 +52,7 @@ def train_on_fold(df_folds, config, device, fold):
     train_df = df_folds[df_folds["fold"] != fold].reset_index(drop=True)
     val_df = df_folds[df_folds["fold"] == fold].reset_index(drop=True)
 
-    trainset = CassavaDataset(train_df, config, transforms=get_train_transforms(config),output_label=True)
-    train_loader = DataLoader(trainset,
-                              batch_size=config.batch_size,
-                              shuffle=True,
-                              num_workers=4)
-
-    valset = CassavaDataset(val_df, config, transforms=get_valid_transforms(config),output_label=True)
-    valid_loader = DataLoader(valset,
-                              batch_size=config.batch_size,
-                              shuffle=False,
-                              num_workers=4)
+    train_loader, valid_loader = prepare_dataloader(train_df, val_df, config)
 
     fitter = Fitter(model, device, config)
     fold_checkpoint = fitter.fit(train_loader, valid_loader, fold)

@@ -2,7 +2,7 @@ class GlobalConfig:
     seed = 2020
     num_classes = 5
     batch_size = 16
-    num_epochs = 6
+    num_epochs = 20
     accum_iter = 4
 
     # unpack the key dict
@@ -26,7 +26,7 @@ class GlobalConfig:
                                  'weight_decay':0.001,'amsgrad':False}}
 
     # criterion
-    criterion = 'CrossEntropyLoss'
+    criterion = 'crossentropy'
     criterion_params = {'CrossEntropyLoss': {'weight':None,'size_average':None,
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'}}
@@ -36,7 +36,7 @@ class GlobalConfig:
     crop_size = {128:110, 256:200, 512:400}
     verbose = 1
     verbose_step = 1
-    fold = 5
+    num_folds = 5
     image_col_name = 'image_id'
     class_col_name = 'label'
     paths = {'train_path': '../train_images',
