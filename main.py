@@ -38,7 +38,7 @@ def seed_everything(seed):
 
 def make_folds(train_csv, config):
     df_folds = train_csv.copy()
-    skf = StratifiedKFold(n_splits=config.fold, shuffle=True, random_state=config.seed).split(
+    skf = StratifiedKFold(n_splits=config.num_folds, shuffle=True, random_state=config.seed).split(
                         X=df_folds[config.image_col_name], y=df_folds[config.class_col_name])
 
     for fold, (train_idx, val_idx) in enumerate(skf):
