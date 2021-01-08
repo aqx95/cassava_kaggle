@@ -71,6 +71,8 @@ class Fitter():
 
             if self.best_acc < avg_val_acc:
                 self.best_acc = avg_val_acc
+#                 for path in glob(f'{self.config.paths["save_path"]}/{self.config.model_name}_fold{fold}_epoch*.pt'):
+#                     os.remove(path)
                 self.save(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
 
@@ -82,8 +84,8 @@ class Fitter():
 
             self.epoch += 1
 
-        fold_best_checkpoint = self.load(os.path.join(self.config.paths["save_path"],
-                                '{}_fold{}.pt').format(self.config.model_name, fold))
+        fold_best_checkpoint = self.load(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
+                        self.config.model_name, fold))
 
         return fold_best_checkpoint
 
@@ -111,7 +113,7 @@ class Fitter():
                 self.optimizer.zero_grad()
 
                 if self.config.train_step_scheduler:
-                    self.scheduler.step()
+                    self.scheduler.step(epoch+step/len(train_loader))
 
             end_time = time.time()
             if self.config.verbose:
@@ -120,7 +122,6 @@ class Fitter():
                     pbar.set_description(description)
 
         return summary_loss.avg
-
 
 
     def valid_epoch(self, epoch, valid_loader):

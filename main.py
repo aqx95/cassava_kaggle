@@ -53,7 +53,6 @@ def train_on_fold(df_folds, config, device, fold):
     val_df = df_folds[df_folds["fold"] == fold].reset_index(drop=True)
 
     train_loader, valid_loader = prepare_dataloader(train_df, val_df, config)
-
     fitter = Fitter(model, device, config)
     fold_checkpoint = fitter.fit(train_loader, valid_loader, fold)
 
@@ -83,8 +82,6 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
         print("Fold {} OOF Score is {}".format(fold_num,
                                                curr_fold_best_score))
     else:
-        # the below for loop guarantees it starts from 1 for fold.
-        # https://stackoverflow.com/questions/33282444/pythonic-way-to-iterate-through-a-range-starting-at-1
         for fold in (number+1 for number in range(config.num_folds)):
             _oof_df = train_on_fold(df_folds=df_folds, config=config, device=device, fold=fold)
             oof_df = pd.concat([oof_df, _oof_df])

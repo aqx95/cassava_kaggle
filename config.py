@@ -2,23 +2,26 @@ class GlobalConfig:
     seed = 2020
     num_classes = 5
     batch_size = 16
-    num_epochs = 20
+    num_epochs = 10
     accum_iter = 4
 
+    cmix = False
+    cmix_params = {'alpha': 1}
+
     # unpack the key dict
-    scheduler = 'ReduceLROnPlateau'
+    scheduler = 'CosineAnnealingWarmRestarts'
     scheduler_params = {'StepLR': {'step_size':2, 'gamma':0.3, 'last_epoch':-1, 'verbose':True},
 
                 'ReduceLROnPlateau': {'mode':'max', 'factor':0.5, 'patience':0, 'threshold':0.0001,
                                       'threshold_mode':'rel', 'cooldown':0, 'min_lr':1e-5,
                                       'eps':1e-08, 'verbose':True},
 
-                'CosineAnnealingWarmRestarts': {'T_0':10, 'T_mult':1, 'eta_min':0, 'last_epoch':-1,
+                'CosineAnnealingWarmRestarts': {'T_0':10, 'T_mult':1, 'eta_min':1e-6, 'last_epoch':-1,
                                                 'verbose':True}}
 
     # do scheduler.step after optimizer.step
-    train_step_scheduler = False
-    val_step_scheduler = True
+    train_step_scheduler = True
+    val_step_scheduler = False
 
     # optimizer
     optimizer = 'AdamW'
@@ -26,8 +29,8 @@ class GlobalConfig:
                                  'weight_decay':0.001,'amsgrad':False}}
 
     # criterion
-    criterion = 'crossentropy'
-    criterion_params = {'CrossEntropyLoss': {'weight':None,'size_average':None,
+    criterion = "crossentropy"
+    criterion_params = {'crossentropy': {'weight':None,'size_average':None,
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'}}
 
@@ -39,9 +42,9 @@ class GlobalConfig:
     num_folds = 5
     image_col_name = 'image_id'
     class_col_name = 'label'
-    paths = {'train_path': '../train_images',
-             'test_path': '../test_images',
-             'csv_path': '../train.csv',
+    paths = {'train_path': '../input/cassava-leaf-disease-classification/train_images',
+             'test_path': '../input/cassava-leaf-disease-classification/test_images',
+             'csv_path': '../input/cassava-leaf-disease-classification/train.csv',
              'log_path': 'log.txt',
              'save_path': 'save',
              'model_weight_path_folder': 'checkpoint'}
