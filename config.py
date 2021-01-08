@@ -42,9 +42,9 @@ class GlobalConfig:
     num_folds = 5
     image_col_name = 'image_id'
     class_col_name = 'label'
-    paths = {'train_path': '../input/cassava-leaf-disease-classification/train_images',
-             'test_path': '../input/cassava-leaf-disease-classification/test_images',
-             'csv_path': '../input/cassava-leaf-disease-classification/train.csv',
+    paths = {'train_path': '../',
+             'test_path': '../test_images',
+             'csv_path': '../train.csv',
              'log_path': 'log.txt',
              'save_path': 'save',
              'model_weight_path_folder': 'checkpoint'}
