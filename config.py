@@ -9,7 +9,7 @@ class GlobalConfig:
     cmix_params = {'alpha': 1}
 
     # unpack the key dict
-    scheduler = 'CosineAnnealingWarmRestarts'
+    scheduler = 'ReduceLROnPlateau'
     scheduler_params = {'StepLR': {'step_size':2, 'gamma':0.3, 'last_epoch':-1, 'verbose':True},
 
                 'ReduceLROnPlateau': {'mode':'max', 'factor':0.5, 'patience':0, 'threshold':0.0001,
@@ -20,8 +20,8 @@ class GlobalConfig:
                                                 'verbose':True}}
 
     # do scheduler.step after optimizer.step
-    train_step_scheduler = True
-    val_step_scheduler = False
+    train_step_scheduler = False
+    val_step_scheduler = True
 
     # optimizer
     optimizer = 'AdamW'
@@ -42,7 +42,7 @@ class GlobalConfig:
     num_folds = 5
     image_col_name = 'image_id'
     class_col_name = 'label'
-    paths = {'train_path': '../',
+    paths = {'train_path': '../train_images',
              'test_path': '../test_images',
              'csv_path': '../train.csv',
              'log_path': 'log.txt',

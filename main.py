@@ -106,4 +106,4 @@ if __name__ == '__main__':
 
     df_folds = make_folds(train_csv, config)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    train_five_folds = train_loop(df_folds=df_folds, config=config, device=device, fold_num=1, train_one_fold=True)
+    train_five_folds = train_loop(df_folds=df_folds, config=config, device=device, fold_num=1, train_one_fold=False)
