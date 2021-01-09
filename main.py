@@ -15,7 +15,7 @@ from sklearn.model_selection import GroupKFold, StratifiedKFold
 
 from data import prepare_dataloader
 from trainer import Fitter
-from model import CassavaImgClassifier
+from model import create_model
 from config import GlobalConfig
 
 
@@ -48,7 +48,7 @@ def make_folds(train_csv, config):
 
 
 def train_on_fold(df_folds, config, device, fold):
-    model = CassavaImgClassifier(config.model_name, config.num_classes, pretrained=True).to(device)
+    model = create_model(config).to(device)
     train_df = df_folds[df_folds["fold"] != fold].reset_index(drop=True)
     val_df = df_folds[df_folds["fold"] == fold].reset_index(drop=True)
 
