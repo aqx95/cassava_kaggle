@@ -49,4 +49,6 @@ class GlobalConfig:
              'save_path': 'save',
              'model_weight_path_folder': 'checkpoint'}
 
+    model = 'vit'
     model_name = 'tf_efficientnet_b4_ns'
+    pretrained = True
