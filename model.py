@@ -1,7 +1,10 @@
 import timm
 import torch.nn as nn
 
-class CassavaImgClassifier(nn.Module):
+class Effnet(nn.Module):
+    """
+    EfficientNet model by https://arxiv.org/pdf/1905.11946.pdf
+    """
     def __init__(self, model_name, n_class, pretrained=False):
         super().__init__()
         self.model = timm.create_model(model_name, pretrained=pretrained)
@@ -11,3 +14,29 @@ class CassavaImgClassifier(nn.Module):
     def forward(self, x):
         x = self.model(x)
         return x
+
+
+class ViT(nn.Module):
+    """
+    VisionTransformer model by https://arxiv.org/pdf/2010.11929.pdf
+    """
+    def __init__(self, model_name, n_class, pretrained=False):
+        super().__init__()
+        self.model = timm.create_model(model_name, pretrained=pretrained)
+        self.model.head = nn.Linear(self.model.head.in_features, n_class)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
+def create_model(config):
+    if config.model == "effnet":
+        model_obj = Effnet
+        model = Effnet(config.model_name, config.num_classes, config.pretrained)
+        return model
+
+    if config.model == 'vit':
+        model_obj = ViT
+        model = ViT(config.model_name, config.num_classes, config.pretrained)
+        return model
