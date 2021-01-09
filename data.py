@@ -29,6 +29,9 @@ class CassavaDataset(Dataset):
         if output_label == True:
             self.labels = self.df['label'].values
 
+        if config.image_size = self.config.image_size[config.model]
+        print('Image size: {} x {}'.format(self.config.image_size, self.config.image_size)
+
 
     def __len__(self):
         return self.df.shape[0]
@@ -75,7 +78,6 @@ def get_valid_transforms(config):
 
 
 def prepare_dataloader(train_df, valid_df, config):
-
     train_ds = CassavaDataset(train_df, config, transforms=get_train_transforms(config),
                 output_label=True)
     valid_ds = CassavaDataset(valid_df, config, transforms=get_valid_transforms(config),
