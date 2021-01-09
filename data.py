@@ -29,13 +29,8 @@ class CassavaDataset(Dataset):
         if output_label == True:
             self.labels = self.df['label'].values
 
-        if config.image_size = self.config.image_size[config.model]
-        print('Image size: {} x {}'.format(self.config.image_size, self.config.image_size)
-
-
     def __len__(self):
         return self.df.shape[0]
-
 
     def __getitem__(self, index):
         if self.output_label:
