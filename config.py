@@ -34,7 +34,8 @@ class GlobalConfig:
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'}}
 
-    image_size = 512
+    image_size = {'vit' : 384,
+                  'effnet' : 512}
     resize = 512
     crop_size = {128:110, 256:200, 512:400}
     verbose = 1
@@ -50,5 +51,5 @@ class GlobalConfig:
              'model_weight_path_folder': 'checkpoint'}
 
     model = 'vit'
-    model_name = 'tf_efficientnet_b4_ns'
+    model_name = 'vit_base_patch32_384' #'tf_efficientnet_b4_ns'
     pretrained = True
