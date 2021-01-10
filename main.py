@@ -52,7 +52,6 @@ def train_on_fold(df_folds, config, device, fold):
     train_df = df_folds[df_folds["fold"] != fold].reset_index(drop=True)
     val_df = df_folds[df_folds["fold"] == fold].reset_index(drop=True)
 
-    config.image_size = config.image_size[config.model]
     print('Image size: {} x {}'.format(config.image_size, config.image_size))
     train_loader, valid_loader = prepare_dataloader(train_df, val_df, config)
     fitter = Fitter(model, device, config)
@@ -77,6 +76,8 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
     # here The CV score is the average of the validation fold metric.
     cv_score_list = []
     oof_df = pd.DataFrame()
+    config.image_size = config.image_size[config.model]
+    
     if train_one_fold:
         _oof_df = train_on_fold(df_folds=df_folds, config=config, device=device, fold=fold_num)
         oof_df = pd.concat([oof_df, _oof_df])
