@@ -24,10 +24,12 @@ class GlobalConfig:
     val_step_scheduler = True
 
     # optimizer
-    optimizer = 'SGD'
+    optimizer = 'Adam'
     optimizer_params = {'AdamW':{'lr':0.001, 'betas':(0.9,0.999), 'eps':1e-08,
                                  'weight_decay':0.001,'amsgrad':False},
-                        'SGD':{'lr':0.001, 'momentum':0., 'weight_decay':0.01}}
+                        'SGD':{'lr':0.001, 'momentum':0., 'weight_decay':0.01},
+                        'Adam':{'lr':1e-4, 'weight_decay':1e-6}
+                        }
 
     # criterion
     criterion = "crossentropy"
@@ -52,5 +54,5 @@ class GlobalConfig:
              'model_weight_path_folder': 'checkpoint'}
 
     model = 'vit'
-    model_name = 'vit_large_patch32_384'#vit_base_patch32_384' #'tf_efficientnet_b4_ns'
+    model_name = 'vit_base_patch16_384'#vit_base_patch32_384' #'tf_efficientnet_b4_ns'
     pretrained = True
