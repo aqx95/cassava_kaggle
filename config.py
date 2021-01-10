@@ -13,7 +13,7 @@ class GlobalConfig:
     scheduler_params = {'StepLR': {'step_size':2, 'gamma':0.3, 'last_epoch':-1, 'verbose':True},
 
                 'ReduceLROnPlateau': {'mode':'max', 'factor':0.5, 'patience':0, 'threshold':0.0001,
-                                      'threshold_mode':'rel', 'cooldown':0, 'min_lr':1e-5,
+                                      'threshold_mode':'rel', 'cooldown':0, 'min_lr':0,
                                       'eps':1e-08, 'verbose':True},
 
                 'CosineAnnealingWarmRestarts': {'T_0':10, 'T_mult':1, 'eta_min':1e-6, 'last_epoch':-1,
@@ -27,7 +27,7 @@ class GlobalConfig:
     optimizer = 'SGD'
     optimizer_params = {'AdamW':{'lr':0.001, 'betas':(0.9,0.999), 'eps':1e-08,
                                  'weight_decay':0.001,'amsgrad':False},
-                        'SGD':{'lr':0.001, 'momentum':0.9}}
+                        'SGD':{'lr':0.001, 'momentum':0., 'weight_decay':0.01s}}
 
     # criterion
     criterion = "crossentropy"
@@ -52,5 +52,5 @@ class GlobalConfig:
              'model_weight_path_folder': 'checkpoint'}
 
     model = 'vit'
-    model_name = 'vit_base_patch16_384'#vit_base_patch32_384' #'tf_efficientnet_b4_ns'
+    model_name = 'vit_large_patch32_384'#vit_base_patch32_384' #'tf_efficientnet_b4_ns'
     pretrained = True
