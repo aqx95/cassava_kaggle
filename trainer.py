@@ -28,7 +28,8 @@ class Fitter():
 
         self.loss = loss_fn(config.criterion, config)
         self.scaler = GradScaler()
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-6)
+        self.optimizer = getattr(torch.optim, config.optimizer)(self.model.parameters(),
+                                **config.optimizer_params[config.optimizer])
 
         self.scheduler = getattr(torch.optim.lr_scheduler, config.scheduler)(optimizer=self.optimizer,
                                 **config.scheduler_params[config.scheduler])
