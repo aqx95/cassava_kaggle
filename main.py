@@ -53,7 +53,7 @@ def train_on_fold(df_folds, config, device, fold):
     val_df = df_folds[df_folds["fold"] == fold].reset_index(drop=True)
 
     config.image_size = config.image_size[config.model]
-    print('Image size: {} x {}'.format(config.image_size, config.image_size)
+    print('Image size: {} x {}'.format(config.image_size, config.image_size))
     train_loader, valid_loader = prepare_dataloader(train_df, val_df, config)
     fitter = Fitter(model, device, config)
     fold_checkpoint = fitter.fit(train_loader, valid_loader, fold)
