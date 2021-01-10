@@ -27,7 +27,7 @@ class GlobalConfig:
     optimizer = 'SGD'
     optimizer_params = {'AdamW':{'lr':0.001, 'betas':(0.9,0.999), 'eps':1e-08,
                                  'weight_decay':0.001,'amsgrad':False},
-                        'SGD':{'lr':0.001, 'momentum':0., 'weight_decay':0.01s}}
+                        'SGD':{'lr':0.001, 'momentum':0., 'weight_decay':0.01}}
 
     # criterion
     criterion = "crossentropy"
