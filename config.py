@@ -2,7 +2,7 @@ class GlobalConfig:
     seed = 2020
     num_classes = 5
     batch_size = 16
-    num_epochs = 10
+    num_epochs = 20
     accum_iter = 4
 
     cmix = False
@@ -24,9 +24,10 @@ class GlobalConfig:
     val_step_scheduler = True
 
     # optimizer
-    optimizer = 'AdamW'
+    optimizer = 'SGD'
     optimizer_params = {'AdamW':{'lr':0.001, 'betas':(0.9,0.999), 'eps':1e-08,
-                                 'weight_decay':0.001,'amsgrad':False}}
+                                 'weight_decay':0.001,'amsgrad':False},
+                        'SGD':{'lr':0.001, 'momentum':0.9}}
 
     # criterion
     criterion = "crossentropy"
@@ -51,5 +52,5 @@ class GlobalConfig:
              'model_weight_path_folder': 'checkpoint'}
 
     model = 'vit'
-    model_name = 'vit_base_patch32_384' #'tf_efficientnet_b4_ns'
+    model_name = 'vit_base_patch16_384'#vit_base_patch32_384' #'tf_efficientnet_b4_ns'
     pretrained = True
