@@ -2,14 +2,14 @@ class GlobalConfig:
     seed = 2020
     num_classes = 5
     batch_size = 16
-    num_epochs = 20
+    num_epochs = 10
     accum_iter = 4
 
     cmix = False
     cmix_params = {'alpha': 1}
 
     # unpack the key dict
-    scheduler = 'ReduceLROnPlateau'
+    scheduler = 'CosineAnnealingWarmRestarts'
     scheduler_params = {'StepLR': {'step_size':2, 'gamma':0.3, 'last_epoch':-1, 'verbose':True},
 
                 'ReduceLROnPlateau': {'mode':'max', 'factor':0.5, 'patience':0, 'threshold':0.0001,
@@ -39,7 +39,7 @@ class GlobalConfig:
 
     image_size = {'vit' : 384,
                   'effnet' : 512}
-    resize = 512
+    resize = 384
     crop_size = {128:110, 256:200, 512:400}
     verbose = 1
     verbose_step = 1
@@ -53,6 +53,6 @@ class GlobalConfig:
              'save_path': 'save',
              'model_weight_path_folder': 'checkpoint'}
 
-    model = 'vit'
-    model_name = 'vit_base_patch16_384'#vit_base_patch32_384' #'tf_efficientnet_b4_ns'
+    model = 'effnet'
+    model_name = 'tf_efficientnet_b4_ns' #'vit_base_patch16_384' #vit_base_patch32_384'
     pretrained = True

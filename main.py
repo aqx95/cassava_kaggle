@@ -77,7 +77,7 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
     cv_score_list = []
     oof_df = pd.DataFrame()
     config.image_size = config.image_size[config.model]
-    
+
     if train_one_fold:
         _oof_df = train_on_fold(df_folds=df_folds, config=config, device=device, fold=fold_num)
         oof_df = pd.concat([oof_df, _oof_df])
@@ -97,6 +97,7 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
         print("Five Folds OOF", get_acc_score(config, oof_df))
 
     oof_df.to_csv("oof.csv")
+    return oof_df
 
 
 
@@ -109,4 +110,4 @@ if __name__ == '__main__':
 
     df_folds = make_folds(train_csv, config)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    train_five_folds = train_loop(df_folds=df_folds, config=config, device=device, fold_num=1, train_one_fold=False)
+    train_five_folds = train_loop(df_folds=df_folds, config=config, device=device, fold_num=1, train_one_fold=True)

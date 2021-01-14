@@ -55,9 +55,10 @@ class CassavaDataset(Dataset):
 
 def get_train_transforms(config):
     return Compose([
-            RandomResizedCrop(config.image_size, config.image_size),
+            RandomResizedCrop(config.resize, config.resize),
             HorizontalFlip(p=0.5),
             VerticalFlip(p=0.5),
+            Transpose(p=0.5),
             Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0, p=1.0),
             Cutout(p=0.5),
             ToTensorV2(p=1.0),
@@ -65,8 +66,17 @@ def get_train_transforms(config):
 
 def get_valid_transforms(config):
     return Compose([
-            CenterCrop(config.image_size, config.image_size, p=1.),
-            Resize(config.image_size, config.image_size),
+            RandomResizedCrop(config.resize, config.resize),
+            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0, p=1.0),
+            ToTensorV2(p=1.0),
+        ], p=1.)
+
+def get_test_transforms(config):
+    return Compose([
+            RandomResizedCrop(config.resize, config.resize),
+            HorizontalFlip(p=0.5),
+            VerticalFlip(p=0.5),
+            Transpose(p=0.5),
             Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0, p=1.0),
             ToTensorV2(p=1.0),
         ], p=1.)
