@@ -4,7 +4,7 @@ class GlobalConfig:
     batch_size = 16
     num_epochs = 10
     accum_iter = 4
-
+    tta = 4
     cmix = False
     cmix_params = {'alpha': 1}
 

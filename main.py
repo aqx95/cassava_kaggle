@@ -53,12 +53,21 @@ def train_on_fold(df_folds, config, device, fold):
     val_df = df_folds[df_folds["fold"] == fold].reset_index(drop=True)
 
     print('Image size: {} x {}'.format(config.image_size, config.image_size))
-    train_loader, valid_loader = prepare_dataloader(train_df, val_df, config)
+    train_loader, valid_loader, tta_loader = prepare_dataloader(train_df, val_df, config)
     fitter = Fitter(model, device, config)
     fold_checkpoint = fitter.fit(train_loader, valid_loader, fold)
 
+    print('Getting {}xTTA predictions'.format(config.tta))
+    oof_tta = []
+    for _ in range(config.tta):
+        oof_tta += [test_inference(model, tta_loader, device, config)]
+
+    oof_tta = np.mean(oof_tta, axis=0)
+    oof_tta = oof_tta.argmax(1)
     val_df[[str(c) for c in range(config.num_classes)]] = fold_checkpoint["oof_preds"]
     val_df["preds"] = fold_checkpoint["oof_preds"].argmax(1)
+    val_df['tta_preds'] = oof_tta
+
 
     return val_df
 
@@ -70,12 +79,20 @@ def get_acc_score(config, result_df):
     score = sklearn.metrics.accuracy_score(y_true=labels, y_pred=preds)
     return score
 
+def get_tta_acc_score(config, result_df):
+    preds = result_df["tta_preds"].values
+    labels = result_df[config.class_col_name].values
+    score = sklearn.metrics.accuracy_score(y_true=labels, y_pred=preds)
+    return score
+
+
 
 def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, train_one_fold=False):
     """Perform the training loop on all folds."""
     # here The CV score is the average of the validation fold metric.
     cv_score_list = []
     oof_df = pd.DataFrame()
+    oof_tta = pd.DataFrame()
     config.image_size = config.image_size[config.model]
 
     if train_one_fold:
@@ -84,6 +101,7 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
         curr_fold_best_score = get_acc_score(config, _oof_df)
         print("Fold {} OOF Score is {}".format(fold_num,
                                                curr_fold_best_score))
+        print("Fold {} OOF TTA Score is {}".format(fold_num, get_tta_acc_score(config, oof_df)))
     else:
         for fold in (number+1 for number in range(config.num_folds)):
             _oof_df = train_on_fold(df_folds=df_folds, config=config, device=device, fold=fold)
@@ -95,9 +113,24 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
         print("CV score", np.mean(cv_score_list))
         print("Variance", np.var(cv_score_list))
         print("Five Folds OOF", get_acc_score(config, oof_df))
+        print("Five Folds OOF TTA", get_tta_acc_score(config, oof_df))
 
     oof_df.to_csv("oof.csv")
     return oof_df
+
+#Inference with TTA
+def test_inference(model, dataloader, device, config):
+    model.eval()
+    tbar = tqdm(enumerate(dataloader), total=len(dataloader))
+    full_pred = []
+    batch_pred = []
+    for i, (images) in tbar:
+        images = images.to(device)
+        with torch.no_grad():
+            y_preds = model(images)
+        batch_pred+=[y_preds.softmax(1).to('cpu').numpy()]
+    full_pred = np.concatenate(batch_pred)
+    return full_pred
 
 
 

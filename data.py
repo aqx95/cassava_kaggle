@@ -87,6 +87,8 @@ def prepare_dataloader(train_df, valid_df, config):
                 output_label=True)
     valid_ds = CassavaDataset(valid_df, config, transforms=get_valid_transforms(config),
                 output_label=True)
+    valid_tta_ds = CassavaDataset(valid_df, config, transforms=get_test_transforms(config),
+                output_label=True)
 
     train_loader = DataLoader(
         train_ds,
@@ -100,4 +102,10 @@ def prepare_dataloader(train_df, valid_df, config):
         num_workers=4,
         shuffle=False)
 
-    return train_loader, val_loader
+    tta_loader = DataLoader(
+        valid_tta_ds,
+        batch_size=config.batch_size,
+        num_workers=4,
+        shuffle=False)
+
+    return train_loader, val_loader, tta_loader
