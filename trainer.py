@@ -26,7 +26,7 @@ class Fitter():
         if not os.path.exists(self.config.paths['save_path']):
             os.makedirs(self.config.paths['save_path'])
 
-        self.loss = loss_fn(config.criterion, config)
+        self.loss = loss_fn(config.criterion, config).to(self.device)
         self.scaler = GradScaler()
         self.optimizer = getattr(torch.optim, config.optimizer)(self.model.parameters(),
                                 **config.optimizer_params[config.optimizer])
