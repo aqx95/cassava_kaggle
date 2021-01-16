@@ -35,7 +35,8 @@ class GlobalConfig:
     criterion = "crossentropy"
     criterion_params = {'crossentropy': {'weight':None,'size_average':None,
                                              'ignore_index':-100,'reduce':None,
-                                             'reduction':'mean'}}
+                                             'reduction':'mean'},
+                        'labelsmoothloss': {'classes':5, 'smoothing':0.05, 'dim':-1},}
 
     image_size = {'vit' : 384,
                   'effnet' : 512}

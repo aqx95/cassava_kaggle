@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import yaml
 import random
+from tqdm import tqdm
 
 import sklearn
 import torch.nn.functional as F
