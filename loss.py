@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 def loss_fn(loss_name, config):
@@ -8,10 +9,10 @@ def loss_fn(loss_name, config):
 
 ### Label Smoothing Loss
 class LabelSmoothLoss(nn.Module):
-    def __init__(self, class, smoothing=0.1, dim=-1):
+    def __init__(self, num_class, smoothing=0.1, dim=-1):
         super().__init__()
         self.conf = 1.0 - smoothing
-        self.class = class
+        self.classes = num_class
         self.smoothing = smoothing
         self.dim = dim
 
