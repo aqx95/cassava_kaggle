@@ -43,7 +43,7 @@ class CassavaDataset(Dataset):
         if self.transforms:
             img = self.transforms(image=img)['image'] # return (C x H x W)
 
-            if self.config.cmix:
+            if self.config.cutmix:
                 img, target = cutmix(img, self.df, index, self.config, transforms=self.transforms)
 
         #do label smoothing (add)
