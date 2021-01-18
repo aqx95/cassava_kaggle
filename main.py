@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import yaml
 import random
+import argparse
 from tqdm import tqdm
 
 import sklearn
@@ -53,7 +54,6 @@ def train_on_fold(df_folds, config, device, fold):
     train_df = df_folds[df_folds["fold"] != fold].reset_index(drop=True)
     val_df = df_folds[df_folds["fold"] == fold].reset_index(drop=True)
 
-    print('Image size: {} x {}'.format(config.image_size, config.image_size))
     train_loader, valid_loader, tta_loader = prepare_dataloader(train_df, val_df, config)
     fitter = Fitter(model, device, config)
     fold_checkpoint = fitter.fit(train_loader, valid_loader, fold)
@@ -94,7 +94,7 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
     cv_score_list = []
     oof_df = pd.DataFrame()
     oof_tta = pd.DataFrame()
-    config.image_size = config.image_size[config.model]
+    print('Image size: {} x {}'.format(config.image_size, config.image_size))
 
     if train_one_fold:
         _oof_df = train_on_fold(df_folds=df_folds, config=config, device=device, fold=fold_num)
@@ -116,7 +116,7 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
         print("Five Folds OOF", get_acc_score(config, oof_df))
         print("Five Folds OOF TTA", get_tta_acc_score(config, oof_df))
 
-    oof_df.to_csv("oof.csv")
+    oof_df.to_csv(f"oof_{config.model_name}.csv")
     return oof_df
 
 #Inference with TTA
@@ -137,11 +137,40 @@ def test_inference(model, dataloader, device, config):
 
 ###MAIN LOOP
 if __name__ == '__main__':
-    config = GlobalConfig
-    seed_everything(config.seed)
+    parser = argparse.ArgumentParser(description='Cassava')
+    parser.add_argument('--epochs', type=int, default=10,
+            help='number of epochs')
+    parser.add_argument("--scheduler", type=string, default='CosineAnnealingWarmRestarts',
+            help="scheduler")
+    parser.add_argument("--optimizer", type=string, default='Adam',
+            help="optimizer")
+    parser.add_argument("--criterion", type=string, default='crossentropy',
+            help="loss function")
+    parser.add_argument("--image-size", type=int, default=512,
+            help="image size")
+    parser.add_argument("--train-one-fold", type=bool, default=True,
+            help="Train one fold")
+    parser.add_argument("--model-type", type=string, required=True,
+            help="model type")
+    parser.add_argument("--model-name", type=string, required=True,
+            help="batch size when evaluating")
+    args = parser.parse_args()
 
+    #overwrite
+    config = GlobalConfig
+    config.num_epochs = args.epochs
+    config.scheduler = args.scheduler
+    config.optimizer = args.optimizer
+    config.criterion = arg.criterion
+    config.image_size = args.image_size
+    config.model = args.model_type
+    config.model_name = args.model_name
+
+
+    seed_everything(config.seed)
     train_csv = pd.read_csv(config.paths['csv_path'])
 
     df_folds = make_folds(train_csv, config)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    train_five_folds = train_loop(df_folds=df_folds, config=config, device=device, fold_num=1, train_one_fold=True)
+    train_five_folds = train_loop(df_folds=df_folds, config=config, device=device,
+                        fold_num=1, train_one_fold=args.train_one_fold)
