@@ -5,7 +5,7 @@ class GlobalConfig:
     num_epochs = 10
     accum_iter = 4
     tta = 4
-    cmix = True
+    cutmix = False
     cmix_params = {'alpha': 1}
 
     # unpack the key dict

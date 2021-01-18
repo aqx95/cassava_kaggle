@@ -140,19 +140,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Cassava')
     parser.add_argument('--epochs', type=int, default=10,
             help='number of epochs')
-    parser.add_argument("--scheduler", type=string, default='CosineAnnealingWarmRestarts',
+    parser.add_argument("--scheduler", type=str, default="CosineAnnealingWarmRestarts",
             help="scheduler")
-    parser.add_argument("--optimizer", type=string, default='Adam',
+    parser.add_argument("--optimizer", type=str, default="Adam",
             help="optimizer")
-    parser.add_argument("--criterion", type=string, default='crossentropy',
+    parser.add_argument("--criterion", type=str, default="crossentropy",
             help="loss function")
     parser.add_argument("--image-size", type=int, default=512,
             help="image size")
-    parser.add_argument("--train-one-fold", type=bool, default=True,
+    parser.add_argument("--train-one-fold", type=bool, default=False,
             help="Train one fold")
-    parser.add_argument("--model-type", type=string, required=True,
+    parser.add_argument("--model-type", type=str, required=True,
             help="model type")
-    parser.add_argument("--model-name", type=string, required=True,
+    parser.add_argument("--model-name", type=str, required=True,
             help="batch size when evaluating")
     args = parser.parse_args()
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
     config.num_epochs = args.epochs
     config.scheduler = args.scheduler
     config.optimizer = args.optimizer
-    config.criterion = arg.criterion
+    config.criterion = args.criterion
     config.image_size = args.image_size
     config.model = args.model_type
     config.model_name = args.model_name
