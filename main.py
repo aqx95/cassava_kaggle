@@ -125,7 +125,7 @@ def test_inference(model, dataloader, device, config):
     tbar = tqdm(enumerate(dataloader), total=len(dataloader))
     full_pred = []
     batch_pred = []
-    for i, (images) in tbar:
+    for i, (images, labels) in tbar:
         images = images.to(device)
         with torch.no_grad():
             y_preds = model(images)
