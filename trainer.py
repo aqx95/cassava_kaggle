@@ -9,6 +9,7 @@ import pytz
 
 from loss import loss_fn
 from torch.cuda.amp import autocast, GradScaler
+from commons import cutmix
 from meter import AverageLossMeter, AccuracyMeter
 
 class Fitter():
