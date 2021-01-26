@@ -85,6 +85,7 @@ class Fitter():
                     self.scheduler.step()
 
             self.epoch += 1
+            self.config.epoch = self.epoch
 
         fold_best_checkpoint = self.load(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))

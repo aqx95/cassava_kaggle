@@ -40,7 +40,8 @@ class CassavaDataset(Dataset):
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # return (H x W x C)
 
-        if self.transforms:
+
+        if self.transforms and self.config.epoch > 1:
             img = self.transforms(image=img)['image'] # return (C x H x W)
 
         #do label smoothing (add)

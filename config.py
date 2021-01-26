@@ -36,7 +36,7 @@ class GlobalConfig:
     criterion_params = {'crossentropy': {'weight':None,'size_average':None,
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'},
-                        'labelsmoothloss': {'num_class':5, 'smoothing':0.05, 'dim':-1},
+                        'labelsmoothloss': {'num_class':5, 'smoothing':0.1, 'dim':-1},
                         'bitemperedloss': {'t1':0.8, 't2':1.4, 'label_smoothing':0.2}
                         }
 

@@ -166,7 +166,7 @@ if __name__ == '__main__':
     config.model = args.model_type
     config.model_name = args.model_name
 
-
+    print(args)
     seed_everything(config.seed)
     train_csv = pd.read_csv(config.paths['csv_path'])
 
