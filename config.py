@@ -37,7 +37,8 @@ class GlobalConfig:
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'},
                         'labelsmoothloss': {'num_class':5, 'smoothing':0.1, 'dim':-1},
-                        'bitemperedloss': {'t1':0.8, 't2':1.4, 'label_smoothing':0.2}
+                        'bitemperedloss': {'t1':0.8, 't2':1.4, 'label_smoothing':0.2},
+                        'taylorcrossentropy':{'num_class':5, 'smoothing':0.2}
                         }
 
     image_size = {'vit' : 384,

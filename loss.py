@@ -8,6 +8,8 @@ def loss_fn(loss_name, config):
         return LabelSmoothLoss(**config.criterion_params[config.criterion])
     if loss_name == 'bitemperedloss':
         return bi_tempered_logistic_loss
+    if loss_name == 'taylorcrossentropy':
+        return TaylorCrossEntropyLoss(**config.criterion_params[config.criterion])
 
 ### Label Smoothing Loss
 class LabelSmoothLoss(nn.Module):
@@ -25,6 +27,41 @@ class LabelSmoothLoss(nn.Module):
             true_dist.fill_(self.smoothing / (self.classes - 1))
             true_dist.scatter_(1, target.data.unsqueeze(1), self.conf)
         return torch.mean(torch.sum(-true_dist * log_probs, dim=self.dim))
+
+
+### Taylor Cross Entropy with Softmax
+class TaylorSoftmax(nn.Module):
+    def __init__(self, dim=-1, n=2):
+        super().__init__()
+        assert n%2 == 0
+        self.dim = dim
+        self.n = n
+
+    def forward(self, x):
+        fn = torch.one_like(x)
+        denor = 1.
+        for i in range(1, self.n+1):
+            fn = fn + x.pow(i/denor)
+        out = fn/fn.sum(dim=self.dim, keepdims=True)
+        return out
+
+
+class TaylorCrossEntropyLoss(nn.Module):
+    def __init__(self, num_class, n=2, ignore_index=-1, reduction='mean', smoothing=0.05):
+        super().__init__()
+        assert n % 2 == 0
+        self.taylor_softmax = TaylorSoftmax(dim=1, n=n)
+        self.reduction = reduction
+        self.ignore_index = ignore_index
+        self.lab_smooth = LabelSmoothLoss(num_class, smoothing=smoothing)
+
+    def forward(self, logits, labels):
+        log_probs = self.taylor_softmax(logits).log()
+        #loss = F.nll_loss(log_probs, labels, reduction=self.reduction,
+        #        ignore_index=self.ignore_index)
+        loss = self.lab_smooth(log_probs, labels)
+        return loss
+
 
 
 ### Bi-Tempered Loss

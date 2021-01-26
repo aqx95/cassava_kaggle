@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import numpy as np
 import yaml
+import seaborn as sns
 import random
 import argparse
 from tqdm import tqdm
@@ -13,6 +14,7 @@ import torch.nn.functional as F
 from glob import glob
 from skimage import io
 
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GroupKFold, StratifiedKFold
 
 from data import prepare_dataloader
@@ -86,6 +88,17 @@ def get_tta_acc_score(config, result_df):
     score = sklearn.metrics.accuracy_score(y_true=labels, y_pred=preds)
     return score
 
+def get_confusion_matrix(config, result_df):
+    preds = result_df["tta_preds"].values
+    labels = result_df[config.class_col_name].values
+    conf_matrix = confusion_matrix(labels, preds)
+    df_cm = prd.DataFrame(conf_matrix, columns=np.unique(labels), index=np.unique(labels))
+    df_cm.index.name = 'Actual'
+    df_cm.columns.name = 'Predicted'
+    plt.figure(figsize = (10,7))
+    sns.set(font_scale=1.4)#for label size
+    confusion_plot = sns.heatmap(df_cm, cmap="Blues", annot=True,annot_kws={"size": 16})
+    confusion_plot.savefig(f'{config.paths['save_path']}_{config.model}.png'))
 
 
 def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, train_one_fold=False):
@@ -116,6 +129,7 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
         print("Five Folds OOF", get_acc_score(config, oof_df))
         print("Five Folds OOF TTA", get_tta_acc_score(config, oof_df))
 
+    get_confusion_matrix(config, oof_df)
     oof_df.to_csv(f"oof_{config.model_name}.csv")
     return oof_df
 
