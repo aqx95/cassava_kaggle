@@ -8,6 +8,7 @@ import seaborn as sns
 import random
 import argparse
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 import sklearn
 import torch.nn.functional as F
@@ -88,17 +89,19 @@ def get_tta_acc_score(config, result_df):
     score = sklearn.metrics.accuracy_score(y_true=labels, y_pred=preds)
     return score
 
-def get_confusion_matrix(config, result_df):
+def get_confusion_matrix(config, result_df, normalize=True):
     preds = result_df["tta_preds"].values
     labels = result_df[config.class_col_name].values
     conf_matrix = confusion_matrix(labels, preds)
-    df_cm = prd.DataFrame(conf_matrix, columns=np.unique(labels), index=np.unique(labels))
+    if normalize:
+        conf_matrix = conf_matrix.astype('float') / conf_matrix.sum(axis=1)[:, np.newaxis]
+    df_cm = pd.DataFrame(conf_matrix, columns=np.unique(labels), index=np.unique(labels))
     df_cm.index.name = 'Actual'
     df_cm.columns.name = 'Predicted'
     plt.figure(figsize = (10,7))
     sns.set(font_scale=1.4)#for label size
     confusion_plot = sns.heatmap(df_cm, cmap="Blues", annot=True,annot_kws={"size": 16})
-    confusion_plot.savefig(f'{config.paths['save_path']}_{config.model}.png'))
+    confusion_plot.figure.savefig(os.path.join(config.paths["save_path"],config.model+'.png'))
 
 
 def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, train_one_fold=False):

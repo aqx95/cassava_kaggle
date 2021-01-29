@@ -38,7 +38,7 @@ class TaylorSoftmax(nn.Module):
         self.n = n
 
     def forward(self, x):
-        fn = torch.one_like(x)
+        fn = torch.ones_like(x)
         denor = 1.
         for i in range(1, self.n+1):
             fn = fn + x.pow(i/denor)

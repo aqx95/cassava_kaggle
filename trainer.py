@@ -26,6 +26,8 @@ class Fitter():
 
         if not os.path.exists(self.config.paths['save_path']):
             os.makedirs(self.config.paths['save_path'])
+        if not os.path.exists(self.config.paths['log_path']):
+            os.makedirs(self.config.paths['log_path'])
 
         self.loss = loss_fn(config.criterion, config).to(self.device)
         self.scaler = GradScaler()
@@ -85,7 +87,6 @@ class Fitter():
                     self.scheduler.step()
 
             self.epoch += 1
-            self.config.epoch = self.epoch
 
         fold_best_checkpoint = self.load(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
@@ -104,11 +105,11 @@ class Fitter():
             imgs, image_labels =  imgs.to(self.device).float(), image_labels.to(self.device)
             batch_size = image_labels.shape[0]
             mix_decision = np.random.rand()
-            if mix_decision < 0.4 and self.config.cutmix:
+            if mix_decision < 0.4 and self.config.cutmix and self.epoch>1:
                 imgs, image_labels =cutmix(imgs, image_labels, self.config.cmix_params['alpha'])
             with autocast():
                 image_preds = self.model(imgs)
-                if mix_decision < 0.4 and self.config.cutmix:
+                if mix_decision < 0.4 and self.config.cutmix and self.epoch>1:
                     loss = self.loss(image_preds, image_labels[0])*image_labels[2] \
                             + self.loss(image_preds, image_labels[1])*(1-image_labels[2])
                 else:
@@ -204,5 +205,5 @@ class Fitter():
         """Log a message."""
         if self.config.verbose:
             print(message)
-        with open(self.config.paths['log_path'], "a+") as logger:
+        with open(os.path.join(self.config.paths['log_path'],'log.txt'), "a+") as logger:
             logger.write(f"{message}\n")

@@ -53,7 +53,7 @@ class GlobalConfig:
     paths = {'train_path': '../train_images',
              'test_path': '../test_images',
              'csv_path': '../train.csv',
-             'log_path': 'log.txt',
+             'log_path': 'log',
              'save_path': 'save',
              'model_weight_path_folder': 'checkpoint'}
 
