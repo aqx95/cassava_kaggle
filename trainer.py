@@ -105,11 +105,11 @@ class Fitter():
             imgs, image_labels =  imgs.to(self.device).float(), image_labels.to(self.device)
             batch_size = image_labels.shape[0]
             mix_decision = np.random.rand()
-            if mix_decision < 0.4 and self.config.cutmix and self.epoch>1:
+            if mix_decision < 0.5 and self.config.cutmix and self.epoch>1:
                 imgs, image_labels =cutmix(imgs, image_labels, self.config.cmix_params['alpha'])
             with autocast():
                 image_preds = self.model(imgs)
-                if mix_decision < 0.4 and self.config.cutmix and self.epoch>1:
+                if mix_decision < 0.5 and self.config.cutmix and self.epoch>1:
                     loss = self.loss(image_preds, image_labels[0])*image_labels[2] \
                             + self.loss(image_preds, image_labels[1])*(1-image_labels[2])
                 else:
