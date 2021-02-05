@@ -9,7 +9,7 @@ class GlobalConfig:
     cmix_params = {'alpha': 1}
 
     # unpack the key dict
-    scheduler = 'CosineAnnealingWarmRestarts'
+    scheduler = 'CosineAnnealingLR'
     scheduler_params = {'StepLR': {'step_size':2, 'gamma':0.3, 'last_epoch':-1, 'verbose':True},
 
                 'ReduceLROnPlateau': {'mode':'max', 'factor':0.5, 'patience':0, 'threshold':0.0001,
@@ -17,7 +17,10 @@ class GlobalConfig:
                                       'eps':1e-08, 'verbose':True},
 
                 'CosineAnnealingWarmRestarts': {'T_0':10, 'T_mult':1, 'eta_min':1e-6, 'last_epoch':-1,
-                                                'verbose':True}}
+                                                'verbose':True}, #train step
+
+                'CosineAnnealingLR':{'T_max':10, 'last_epoch':1} #validation step
+                }
 
     # do scheduler.step after optimizer.step
     train_step_scheduler = False
