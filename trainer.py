@@ -87,7 +87,7 @@ class Fitter():
                 self.save(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
 
-            if self.config.val_step_scheduler and epoch > self.swa_start:
+            if self.config.val_step_scheduler and epoch < self.swa_start:
                 if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     self.scheduler.step(self.monitored_metrics)
                 else:
@@ -137,7 +137,7 @@ class Fitter():
                 self.scaler.update()
                 self.optimizer.zero_grad()
 
-                if self.config.train_step_scheduler and epoch <= self.swa_start:
+                if self.config.train_step_scheduler:
                     self.scheduler.step(epoch+step/len(train_loader))
 
             end_time = time.time()
