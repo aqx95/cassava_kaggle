@@ -5,3 +5,4 @@ pydicom==2.1.2
 albumentations==0.5.2
 catalyst==20.12
 pyyaml==5.3.1
+torchcontrib==0.0.2
