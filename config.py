@@ -19,7 +19,7 @@ class GlobalConfig:
                 'CosineAnnealingWarmRestarts': {'T_0':10, 'T_mult':1, 'eta_min':1e-6, 'last_epoch':-1,
                                                 'verbose':True}, #train step
 
-                'CosineAnnealingLR':{'T_max':10, 'last_epoch':1} #validation step
+                'CosineAnnealingLR':{'T_max':10, 'last_epoch':-1} #validation step
                 }
 
     # do scheduler.step after optimizer.step

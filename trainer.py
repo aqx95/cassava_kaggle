@@ -40,9 +40,10 @@ class Fitter():
                                 **config.scheduler_params[config.scheduler])
 
         #SWA
-        self.swa_model = AveragedModel(self.model)
-        self.swa_start = 0.75*self.config.num_epochs
-        self.swa_scheduler = SWALR(self.optimizer, anneal_strategy='cos', anneal_epochs=5, swa_lr=1e-4)
+        self.swa = SWA(self.optimizer)
+        # self.swa_model = AveragedModel(self.model)
+        # self.swa_start = 0.75*self.config.num_epochs
+        # self.swa_scheduler = SWALR(self.optimizer, anneal_strategy='cos', anneal_epochs=5, swa_lr=1e-4)
 
         self.log("Fitter Class prepared. Training with {} \n".format(self.device))
 
@@ -87,20 +88,20 @@ class Fitter():
                 self.save(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
 
-            if self.config.val_step_scheduler and epoch < self.swa_start:
+            if self.config.val_step_scheduler:
                 if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     self.scheduler.step(self.monitored_metrics)
                 else:
                     self.scheduler.step()
 
-            else:
-                self.swa_model.update_parameters(self.model)
-                self.swa_scheduler.step()
+            # else:
+            #     self.swa_model.update_parameters(self.model)
+            #     self.swa_scheduler.step()
 
             self.epoch += 1
 
         #computes activation statistics for each bn layer in model
-        torch.optim.swa_utils.update_bn(train_loader, self.swa_model)
+        #torch.optim.swa_utils.update_bn(train_loader, self.swa_model)
 
         fold_best_checkpoint = self.load(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
@@ -194,10 +195,10 @@ class Fitter():
 
     def save(self, path):
         """Save the weight for the best evaluation loss."""
-        self.swa_model.eval()
+        self.model.eval()
         torch.save(
             {
-                "model_state_dict": self.swa_model.state_dict(),
+                "model_state_dict": self.model.state_dict(),
                 "optimizer_state_dict": self.optimizer.state_dict(),
                 "scheduler_state_dict": self.scheduler.state_dict(),
                 "best_acc": self.best_acc,
