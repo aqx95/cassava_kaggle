@@ -5,8 +5,12 @@ class GlobalConfig:
     num_epochs = 10
     accum_iter = 4
     tta = 4
+
+    #Mixing augmentation
     cutmix = True
     cmix_params = {'alpha': 1}
+    fmix = False
+    fmix_params = {'alpha': 1, 'decay_power': 3., 'shape': (128,128)}
 
     # unpack the key dict
     scheduler = 'CosineAnnealingLR'

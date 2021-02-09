@@ -9,7 +9,7 @@ import pytz
 
 from loss import loss_fn
 from torch.cuda.amp import autocast, GradScaler
-from commons import cutmix
+from commons import cutmix, fmix
 from torchcontrib.optim import SWA
 from torch.optim.swa_utils import AveragedModel, SWALR
 from meter import AverageLossMeter, AccuracyMeter
@@ -119,12 +119,19 @@ class Fitter():
         for step, (imgs, image_labels) in pbar:
             imgs, image_labels =  imgs.to(self.device).float(), image_labels.to(self.device)
             batch_size = image_labels.shape[0]
+            #Mixing augmentation
             mix_decision = np.random.rand()
-            if mix_decision < 0.5 and self.config.cutmix and self.epoch>1:
+            if mix_decision < 0.25 and self.config.cutmix and self.epoch>1:
                 imgs, image_labels =cutmix(imgs, image_labels, self.config.cmix_params['alpha'])
+            if mix_decision > 0.75 and self.config.fmix and self.epoch>1:
+                imgs, image_labels =fmix(imgs, image_labels, **self.config.fmix_params)
+
             with autocast():
                 image_preds = self.model(imgs)
-                if mix_decision < 0.5 and self.config.cutmix and self.epoch>1:
+                if mix_decision < 0.25 and self.config.cutmix and self.epoch>1:
+                    loss = self.loss(image_preds, image_labels[0])*image_labels[2] \
+                            + self.loss(image_preds, image_labels[1])*(1-image_labels[2])
+                elif mix_decision > 0.75 and self.config.fmix and self.epoch>1:
                     loss = self.loss(image_preds, image_labels[0])*image_labels[2] \
                             + self.loss(image_preds, image_labels[1])*(1-image_labels[2])
                 else:
