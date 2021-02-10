@@ -7,9 +7,11 @@ def loss_fn(loss_name, config):
     if loss_name == 'labelsmoothloss':
         return LabelSmoothLoss(**config.criterion_params[config.criterion])
     if loss_name == 'bitemperedloss':
-        return bi_tempered_logistic_loss
+        return BiTemperedLogisticLoss(**config.criterion_params[config.criterion])
     if loss_name == 'taylorcrossentropy':
         return TaylorCrossEntropyLoss(**config.criterion_params[config.criterion])
+    if loss_name == 'symmetriccrossentropy':
+        return SymmetricCrossEntropy(**config.criterion_params[config.criterion])
 
 ### Label Smoothing Loss
 class LabelSmoothLoss(nn.Module):
@@ -62,6 +64,26 @@ class TaylorCrossEntropyLoss(nn.Module):
         loss = self.lab_smooth(log_probs, labels)
         return loss
 
+
+class SymmetricCrossEntropy(nn.Module):
+
+    def __init__(self, alpha=0.1, beta=1.0, num_classes= 5):
+        super(SymmetricCrossEntropy, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.num_classes = num_classes
+        self.lab_smooth = LabelSmoothLoss(num_classes, smoothing=0.3)
+
+    def forward(self, logits, targets, reduction='mean'):
+        onehot_targets = torch.eye(self.num_classes)[targets].cuda()
+        #ce_loss = F.cross_entropy(logits, targets, reduction=reduction)
+        ce_loss = self.lab_smooth(logits, targets)
+        rce_loss = (-onehot_targets*logits.softmax(1).clamp(1e-7, 1.0).log()).sum(1)
+        if reduction == 'mean':
+            rce_loss = rce_loss.mean()
+        elif reduction == 'sum':
+            rce_loss = rce_loss.sum()
+        return self.alpha * ce_loss + self.beta * rce_loss
 
 
 ### Bi-Tempered Loss
@@ -400,3 +422,20 @@ def bi_tempered_logistic_loss(activations,
         return loss_values.sum()
     if reduction == 'mean':
         return loss_values.mean()
+
+class BiTemperedLogisticLoss(nn.Module):
+    def __init__(self, t1, t2, smoothing=0.0):
+        super(BiTemperedLogisticLoss, self).__init__()
+        self.t1 = t1
+        self.t2 = t2
+        self.smoothing = smoothing
+    def forward(self, logit_label, truth_label):
+        loss_label = bi_tempered_logistic_loss(
+            logit_label, truth_label,
+            t1=self.t1, t2=self.t2,
+            label_smoothing=self.smoothing,
+            reduction='none'
+        )
+
+        loss_label = loss_label.mean()
+        return loss_label

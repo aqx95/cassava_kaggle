@@ -32,7 +32,7 @@ class GlobalConfig:
 
     # optimizer
     optimizer = 'Adam'
-    optimizer_params = {'AdamW':{'lr':0.001, 'betas':(0.9,0.999), 'eps':1e-08,
+    optimizer_params = {'AdamW':{'lr':1e-4, 'betas':(0.9,0.999), 'eps':1e-08,
                                  'weight_decay':0.001,'amsgrad':False},
                         'SGD':{'lr':0.001, 'momentum':0., 'weight_decay':0.01},
                         'Adam':{'lr':1e-4, 'weight_decay':1e-6}
@@ -43,9 +43,10 @@ class GlobalConfig:
     criterion_params = {'crossentropy': {'weight':None,'size_average':None,
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'},
-                        'labelsmoothloss': {'num_class':5, 'smoothing':0.2, 'dim':-1},
-                        'bitemperedloss': {'t1':0.8, 't2':3.0, 'label_smoothing':0.3},
-                        'taylorcrossentropy':{'num_class':5, 'smoothing':0.2}
+                        'labelsmoothloss': {'num_class':5, 'smoothing':0.3, 'dim':-1},
+                        'bitemperedloss': {'t1':0.8, 't2':1.8, 'smoothing':0.3},
+                        'taylorcrossentropy':{'num_class':5, 'smoothing':0.3},
+                        'symmetriccrossentropy': {'num_classes':5, 'alpha':0.1, 'beta':1.0}
                         }
 
     image_size = {'vit' : 384,

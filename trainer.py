@@ -124,7 +124,8 @@ class Fitter():
             if mix_decision < 0.25 and self.config.cutmix and self.epoch>1:
                 imgs, image_labels =cutmix(imgs, image_labels, self.config.cmix_params['alpha'])
             if mix_decision > 0.75 and self.config.fmix and self.epoch>1:
-                imgs, image_labels =fmix(imgs, image_labels, **self.config.fmix_params)
+                imgs, image_labels =fmix(imgs, image_labels, self.device, **self.config.fmix_params)
+                imgs = imgs.float()
 
             with autocast():
                 image_preds = self.model(imgs)
@@ -172,7 +173,7 @@ class Fitter():
                 image_labels = image_labels.to(self.device).long()
                 batch_size = image_labels.shape[0]
 
-                image_preds = self.swa_model(imgs)
+                image_preds = self.model(imgs)
                 loss = self.loss(image_preds, image_labels)
                 summary_loss.update(loss.item(), batch_size)
 
