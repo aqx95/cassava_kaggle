@@ -50,7 +50,8 @@ class GlobalConfig:
                         }
 
     image_size = {'vit' : 384,
-                  'effnet' : 512}
+                  'effnet' : 512,
+                  'resnext': 512}
     resize = 384
     crop_size = {128:110, 256:200, 512:400}
     verbose = 1
