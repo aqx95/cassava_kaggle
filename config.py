@@ -10,7 +10,7 @@ class GlobalConfig:
     cutmix = True
     cmix_params = {'alpha': 1}
     fmix = False
-    fmix_params = {'alpha': 1, 'decay_power': 3., 'shape': (128,128)}
+    fmix_params = {'alpha': 1, 'decay_power': 3., 'shape': (,)}
 
     # unpack the key dict
     scheduler = 'CosineAnnealingLR'

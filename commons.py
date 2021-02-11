@@ -1,8 +1,11 @@
 import random
 import os
+import cv2
 import numpy as np
 import torch
-import cv2
+import math
+from scipy.stats import beta
+
 
 
 def rand_bbox(size, lam):
@@ -197,7 +200,7 @@ def cutmix(data, target, alpha):
     return new_data, targets
 
 
-def fmix(data, targets, alpha, device, decay_power, shape, max_soft=0.0, reformulate=False):
+def fmix(data, targets, device, alpha, decay_power, shape, max_soft=0.0, reformulate=False):
     lam, mask = sample_mask(alpha, decay_power, shape, max_soft, reformulate)
     indices = torch.randperm(data.size(0))
     shuffled_data = data[indices]

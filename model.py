@@ -30,6 +30,19 @@ class ViT(nn.Module):
         return x
 
 
+class Resnext(nn.Module):
+    def __init__(self, model_name, n_class, pretrained=False):
+          super().__init__()
+          self.model = timm.create_model(model_name, pretrained=pretrained)
+          n_features = self.model.fc.in_features
+          self.model.fc = nn.Linear(n_features, n_class)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
+# model factory
 def create_model(config):
     if config.model == "effnet":
         model_obj = Effnet
@@ -39,4 +52,9 @@ def create_model(config):
     if config.model == 'vit':
         model_obj = ViT
         model = ViT(config.model_name, config.num_classes, config.pretrained)
+        return model
+
+    if config.model == 'resnext':
+        model_obj = Resnext
+        model = Resnext(config.model_name, config.num_classes, config.pretrained)
         return model

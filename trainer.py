@@ -128,7 +128,7 @@ class Fitter():
                 imgs = imgs.float()
 
             with autocast():
-                image_preds = self.model(imgs)
+                image_preds = self.model(imgs) #prediction (bs x num_class)
                 if mix_decision < 0.25 and self.config.cutmix and self.epoch>1:
                     loss = self.loss(image_preds, image_labels[0])*image_labels[2] \
                             + self.loss(image_preds, image_labels[1])*(1-image_labels[2])
