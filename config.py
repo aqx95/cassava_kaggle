@@ -4,7 +4,7 @@ class GlobalConfig:
     batch_size = 16
     num_epochs = 10
     accum_iter = 4
-    tta = 4
+    tta = 5
 
     #Mixing augmentation
     cutmix = True
@@ -20,10 +20,10 @@ class GlobalConfig:
                                       'threshold_mode':'rel', 'cooldown':0, 'min_lr':0,
                                       'eps':1e-08, 'verbose':True},
 
-                'CosineAnnealingWarmRestarts': {'T_0':num_epochs, 'T_mult':1, 'eta_min':1e-6, 'last_epoch':-1,
+                'CosineAnnealingWarmRestarts': {'T_0':?, 'T_mult':1, 'eta_min':1e-6, 'last_epoch':-1,
                                                 'verbose':True}, #train step
 
-                'CosineAnnealingLR':{'T_max':num_epochs, 'last_epoch':-1} #validation step
+                'CosineAnnealingLR':{'T_max':?, 'last_epoch':-1} #validation step
                 }
 
     # do scheduler.step after optimizer.step
@@ -35,7 +35,7 @@ class GlobalConfig:
     optimizer_params = {'AdamW':{'lr':1e-4, 'betas':(0.9,0.999), 'eps':1e-08,
                                  'weight_decay':1e-6,'amsgrad':False},
                         'SGD':{'lr':0.001, 'momentum':0., 'weight_decay':0.01},
-                        'Adam':{'lr':1e-4, 'weight_decay':1e-6}
+                        'Adam':{'lr':1e-4, 'weight_decay':1e-5}
                         }
 
     # criterion
@@ -69,3 +69,4 @@ class GlobalConfig:
     model = 'effnet'
     model_name = 'tf_efficientnet_b4_ns' #'vit_base_patch16_384' #vit_base_patch32_384'
     pretrained = True
+    swa = False

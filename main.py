@@ -171,6 +171,8 @@ if __name__ == '__main__':
             help="model type")
     parser.add_argument("--model-name", type=str, required=True,
             help="batch size when evaluating")
+    parser.add_argument("--train-swa", type=bool, default=False,
+            help="use SWA model")
     args = parser.parse_args()
 
     #overwrite
@@ -182,6 +184,7 @@ if __name__ == '__main__':
     config.image_size = args.image_size
     config.model = args.model_type
     config.model_name = args.model_name
+    config.swa = args.train_swa
 
     print(args)
     seed_everything(config.seed)

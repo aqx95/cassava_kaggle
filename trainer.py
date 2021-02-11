@@ -40,12 +40,14 @@ class Fitter():
                                 **config.scheduler_params[config.scheduler])
 
         #SWA
-        self.swa = SWA(self.optimizer)
-        # self.swa_model = AveragedModel(self.model)
-        # self.swa_start = 0.75*self.config.num_epochs
-        # self.swa_scheduler = SWALR(self.optimizer, anneal_strategy='cos', anneal_epochs=5, swa_lr=1e-4)
+        self.swa = config.swa
+        if self.swa:
+            self.swa_model = AveragedModel(self.model)
+            self.swa_start = int(0.7*self.config.num_epochs)
+            anneal_epoch = self.config.num_epochs - self.swa_start - 1
+            self.swa_scheduler = SWALR(self.optimizer, anneal_strategy='cos', anneal_epochs=anneal_epoch, swa_lr=1e-4)
 
-        self.log("Fitter Class prepared. Training with {} \n".format(self.device))
+        self.log("Fitter Class prepared. Training {} with SWA: {} \n".format(self.device, bool(self.swa)))
 
     def fit(self, train_loader, valid_loader, fold):
         self.log('Training on Fold {} with {} \n'.format(fold, self.config.model_name))
@@ -63,7 +65,23 @@ class Fitter():
 
             train_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(end_time - start_time))
             self.log("[RESULT]: Train. Epoch {} | Avg Train Summary Loss: {:.6f} | "
-                    "Time Elapsed: {}".format(epoch + 1, avg_train_loss, train_elapsed_time))
+                    "Time Elapsed: {}".format(self.epoch, avg_train_loss, train_elapsed_time))
+
+            if self.swa:
+                if self.config.val_step_scheduler and self.epoch <= self.swa_start:
+                    self.scheduler.step()
+                else:
+                    self.swa_model.update_parameters(self.model)
+                    self.swa_scheduler.step()
+                    #computes activation statistics for each bn layer in model
+                    torch.optim.swa_utils.update_bn(train_loader, self.swa_model, self.device)
+
+            else:
+                if self.config.val_step_scheduler:
+                    if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                        self.scheduler.step(self.monitored_metrics)
+                    else:
+                        self.scheduler.step()
 
             ##Validation
             start_time = time.time()
@@ -73,7 +91,7 @@ class Fitter():
             val_elapsed_time = time.strftime("%H:%M:%S", time.gmtime(end_time - start_time))
             self.log("[RESULT]: Validation. Epoch: {} | " "Avg Validation Summary Loss: {:.6f} | "
                      "Validation Accuracy: {:.6f} | Time Elapsed: {}".format(
-                     epoch + 1, avg_val_loss, avg_val_acc, val_elapsed_time))
+                     self.epoch, avg_val_loss, avg_val_acc, val_elapsed_time))
 
             self.val_predictions = val_pred
             self.monitored_metrics = avg_val_acc
@@ -88,20 +106,7 @@ class Fitter():
                 self.save(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
 
-            if self.config.val_step_scheduler:
-                if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-                    self.scheduler.step(self.monitored_metrics)
-                else:
-                    self.scheduler.step()
-
-            # else:
-            #     self.swa_model.update_parameters(self.model)
-            #     self.swa_scheduler.step()
-
             self.epoch += 1
-
-        #computes activation statistics for each bn layer in model
-        #torch.optim.swa_utils.update_bn(train_loader, self.swa_model)
 
         fold_best_checkpoint = self.load(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
@@ -162,6 +167,7 @@ class Fitter():
         self.model.eval()
         summary_loss = AverageLossMeter()
         accuracy_scores = AccuracyMeter()
+        valid_model = "Single Model"
 
         start_time = time.time()
         val_gt_label_list, val_preds_softmax_list, val_preds_argmax_list = [], [], []
@@ -173,7 +179,11 @@ class Fitter():
                 image_labels = image_labels.to(self.device).long()
                 batch_size = image_labels.shape[0]
 
-                image_preds = self.model(imgs)
+                if self.swa and self.epoch > self.swa_start:
+                    image_preds = self.swa_model(imgs)
+                    valid_model = "SWA Model"
+                else:
+                    image_preds = self.model(imgs)
                 loss = self.loss(image_preds, image_labels)
                 summary_loss.update(loss.item(), batch_size)
 
@@ -188,7 +198,8 @@ class Fitter():
 
                 if self.config.verbose:
                     if (step % self.config.verbose_step) == 0:
-                        description = f"Validation Steps {step}/{len(valid_loader)}, \
+                        description = f"Validation Model: {valid_model}, \
+                                    Validation Steps {step}/{len(valid_loader)}, \
                                     summary_loss: {summary_loss.avg:.3f},\
                                     val_acc: {accuracy_scores.avg:.6f} time: {(end_time - start_time):.3f}"
                         pbar.set_description(description)
@@ -206,7 +217,7 @@ class Fitter():
         self.model.eval()
         torch.save(
             {
-                "model_state_dict": self.model.state_dict(),
+                "model_state_dict": self.swa_model.state._dict() if self.swa else self.model.state_dict(),
                 "optimizer_state_dict": self.optimizer.state_dict(),
                 "scheduler_state_dict": self.scheduler.state_dict(),
                 "best_acc": self.best_acc,
