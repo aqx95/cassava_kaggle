@@ -217,7 +217,7 @@ class Fitter():
         self.model.eval()
         torch.save(
             {
-                "model_state_dict": self.swa_model.state._dict() if self.swa else self.model.state_dict(),
+                "model_state_dict": self.swa_model.module.state_dict() if self.swa else self.model.state_dict(),
                 "optimizer_state_dict": self.optimizer.state_dict(),
                 "scheduler_state_dict": self.scheduler.state_dict(),
                 "best_acc": self.best_acc,
