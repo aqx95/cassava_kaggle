@@ -101,7 +101,13 @@ class Fitter():
                         self.config.model_name, fold))
 
             #update scheduler
-            if self.config.val_step_scheduler and self.epoch <= self.swa_start:
+            if self.config.val_step_scheduler and self.swa and self.epoch <= self.swa_start:
+                if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    self.scheduler.step(self.monitored_metrics)
+                else:
+                    self.scheduler.step()
+
+            elif self.config.val_step_scheduler and not self.swa:
                 if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     self.scheduler.step(self.monitored_metrics)
                 else:
@@ -150,14 +156,21 @@ class Fitter():
             self.scaler.scale(loss).backward()
 
             if ((step+1) % self.config.accum_iter == 0 or (step+1) == len(train_loader)):
-                self.scaler.step(self.swalr)
-                self.scaler.update()
-                self.swalr.zero_grad()
+                if self.swa:
+                  self.scaler.step(self.swalr)
+                  self.scaler.update()
+                  self.swalr.zero_grad()
+                else:
+                  self.scaler.step(self.optimizer)
+                  self.scaler.update()
+                  self.optimizer.zero_grad()
 
-                if self.epoch > self.swa_start:
+                if self.swa and self.epoch > self.swa_start:
                     self.swalr.update_swa()
 
-                if self.config.train_step_scheduler and self.epoch <= self.swa_start:
+                if self.config.train_step_scheduler and self.swa and self.epoch <= self.swa_start:
+                    self.scheduler.step(epoch+step/len(train_loader))
+                elif self.config.train_step_scheduler and not self.swa:
                     self.scheduler.step(epoch+step/len(train_loader))
 
             end_time = time.time()
