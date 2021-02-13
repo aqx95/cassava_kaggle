@@ -9,7 +9,7 @@ class GlobalConfig:
     #Mixing augmentation
     cutmix = True
     cmix_params = {'alpha': 1}
-    fmix = False
+    fmix = True
     fmix_params = {'alpha': 1, 'decay_power': 3., 'shape': (,)}
 
     # unpack the key dict
@@ -70,3 +70,4 @@ class GlobalConfig:
     model_name = 'tf_efficientnet_b4_ns' #'vit_base_patch16_384' #vit_base_patch32_384'
     pretrained = True
     swa = False
+    swa_ratio = 0.7

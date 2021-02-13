@@ -42,8 +42,8 @@ class Fitter():
         #SWA
         self.swa = config.swa
         if self.swa:
-            self.swa_start = int(0.7*self.config.num_epochs-1)
-            self.swalr = SWA(self.optimizer, swa_start=self.swa_start, swa_freq=1, swa_lr=1e-4)
+            self.swa_start = int(config.swa_ratio*config.num_epochs)
+            self.swalr = SWA(self.optimizer)
             # self.swa_model = AveragedModel(self.model)
             # anneal_epoch = self.config.num_epochs - self.swa_start - 2
             # self.swa_scheduler = SWALR(self.optimizer, anneal_strategy='cos', anneal_epochs=anneal_epoch, swa_lr=1e-4)
@@ -101,7 +101,7 @@ class Fitter():
                         self.config.model_name, fold))
 
             #update scheduler
-            if self.config.val_step_scheduler:
+            if self.config.val_step_scheduler and self.epoch <= self.swa_start:
                 if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     self.scheduler.step(self.monitored_metrics)
                 else:
@@ -109,6 +109,7 @@ class Fitter():
 
             self.epoch += 1
 
+        self.swalr.swap_swa_sgd()
         fold_best_checkpoint = self.load(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
 
@@ -148,11 +149,11 @@ class Fitter():
             self.scaler.scale(loss).backward()
 
             if ((step+1) % self.config.accum_iter == 0 or (step+1) == len(train_loader)):
-                self.scaler.step(self.swalr)
+                self.scaler.step(self.optimizer)
                 self.scaler.update()
-                self.swalr.zero_grad()
+                self.optimizer.zero_grad()
 
-                if self.config.train_step_scheduler:
+                if self.config.train_step_scheduler and self.epoch <= self.swa_start:
                     self.scheduler.step(epoch+step/len(train_loader))
 
             end_time = time.time()
@@ -165,11 +166,13 @@ class Fitter():
 
 
     def valid_epoch(self, epoch, valid_loader):
-        self.swalr.swap_swa_sgd()
+        model_valid = 'Normal'
+        if self.epoch > self.swa_start:
+            self.swalr.swap_swa_sgd()
+            model_valid = "SWA"
         self.model.eval()
         summary_loss = AverageLossMeter()
         accuracy_scores = AccuracyMeter()
-        valid_model = "Single Model"
 
         start_time = time.time()
         val_gt_label_list, val_preds_softmax_list, val_preds_argmax_list = [], [], []
@@ -196,8 +199,7 @@ class Fitter():
 
                 if self.config.verbose:
                     if (step % self.config.verbose_step) == 0:
-                        description = f"Validation Model: {valid_model}, \
-                                    Validation Steps {step}/{len(valid_loader)}, \
+                        description = f"Mode: {model_valid}, Validation Steps {step}/{len(valid_loader)}, \
                                     summary_loss: {summary_loss.avg:.3f},\
                                     val_acc: {accuracy_scores.avg:.6f} time: {(end_time - start_time):.3f}"
                         pbar.set_description(description)
@@ -206,17 +208,19 @@ class Fitter():
             val_preds_softmax_array = np.concatenate(val_preds_softmax_list, axis=0)
             val_preds_argmax_array = np.concatenate(val_preds_argmax_list,axis=0)
 
-        self.swalr.swap_swa_sgd()
+        if self.epoch > self.swa_start:
+            self.swalr.swap_swa_sgd()
         return summary_loss.avg, accuracy_scores.avg, val_preds_softmax_array
 
 
     def save(self, path):
         """Save the weight for the best evaluation loss."""
-        self.swalr.swap_swa_sgd()
+        if self.epoch > self.swa_start:
+            self.swalr.swap_swa_sgd()
         self.model.eval()
         torch.save(
             {
-                "model_state_dict": self.swa_model.module.state_dict() if self.swa else self.model.state_dict(),
+                "model_state_dict": self.model.state_dict(),
                 "optimizer_state_dict": self.optimizer.state_dict(),
                 "scheduler_state_dict": self.scheduler.state_dict(),
                 "best_acc": self.best_acc,
@@ -226,6 +230,8 @@ class Fitter():
             },
             path,
         )
+        if self.epoch > self.swa_start:
+            self.swalr.swap_swa_sgd()
 
 
     def load(self, path):

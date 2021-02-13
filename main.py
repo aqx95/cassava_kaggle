@@ -72,7 +72,6 @@ def train_on_fold(df_folds, config, device, fold):
     val_df["preds"] = fold_checkpoint["oof_preds"].argmax(1)
     val_df['tta_preds'] = oof_tta
 
-
     return val_df
 
 
@@ -124,8 +123,10 @@ def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, tra
             _oof_df = train_on_fold(df_folds=df_folds, config=config, device=device, fold=fold)
             oof_df = pd.concat([oof_df, _oof_df])
             curr_fold_best_score = get_acc_score(config, _oof_df)
+            curr_fold_tta_score = get_tta_acc_score(config, _oof_df)
             cv_score_list.append(curr_fold_best_score)
             print("\n\n\nOOF Score for Fold {}: {}\n\n\n".format(fold, curr_fold_best_score))
+            print("\n\n\nTTA Score for Fold {}: {}\n\n\n".format(fold, curr_fold_tta_score))
 
         print("CV score", np.mean(cv_score_list))
         print("Variance", np.var(cv_score_list))
