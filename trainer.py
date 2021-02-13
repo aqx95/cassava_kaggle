@@ -109,7 +109,8 @@ class Fitter():
 
             self.epoch += 1
 
-        self.swalr.swap_swa_sgd()
+        if self.swa and self.epoch > self.swa_start:
+            self.swalr.swap_swa_sgd()
         fold_best_checkpoint = self.load(os.path.join(self.config.paths['save_path'], '{}_fold{}.pt').format(
                         self.config.model_name, fold))
 
@@ -149,9 +150,12 @@ class Fitter():
             self.scaler.scale(loss).backward()
 
             if ((step+1) % self.config.accum_iter == 0 or (step+1) == len(train_loader)):
-                self.scaler.step(self.optimizer)
+                self.scaler.step(self.swalr)
                 self.scaler.update()
-                self.optimizer.zero_grad()
+                self.swalr.zero_grad()
+
+                if self.epoch > self.swa_start:
+                    self.swalr.update_swa()
 
                 if self.config.train_step_scheduler and self.epoch <= self.swa_start:
                     self.scheduler.step(epoch+step/len(train_loader))
@@ -167,7 +171,7 @@ class Fitter():
 
     def valid_epoch(self, epoch, valid_loader):
         model_valid = 'Normal'
-        if self.epoch > self.swa_start:
+        if self.swa and self.epoch > self.swa_start:
             self.swalr.swap_swa_sgd()
             model_valid = "SWA"
         self.model.eval()
@@ -208,14 +212,14 @@ class Fitter():
             val_preds_softmax_array = np.concatenate(val_preds_softmax_list, axis=0)
             val_preds_argmax_array = np.concatenate(val_preds_argmax_list,axis=0)
 
-        if self.epoch > self.swa_start:
+        if self.swa and self.epoch > self.swa_start:
             self.swalr.swap_swa_sgd()
         return summary_loss.avg, accuracy_scores.avg, val_preds_softmax_array
 
 
     def save(self, path):
         """Save the weight for the best evaluation loss."""
-        if self.epoch > self.swa_start:
+        if self.swa and self.epoch > self.swa_start:
             self.swalr.swap_swa_sgd()
         self.model.eval()
         torch.save(
@@ -230,7 +234,7 @@ class Fitter():
             },
             path,
         )
-        if self.epoch > self.swa_start:
+        if self.swa and self.epoch > self.swa_start:
             self.swalr.swap_swa_sgd()
 
 
