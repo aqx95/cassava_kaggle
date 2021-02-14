@@ -3,7 +3,7 @@ class GlobalConfig:
     num_classes = 5
     batch_size = 16
     num_epochs = 10
-    accum_iter = 4
+    accum_iter = 2
     tta = 5
 
     #Mixing augmentation
@@ -27,8 +27,8 @@ class GlobalConfig:
                 }
 
     # do scheduler.step after optimizer.step
-    train_step_scheduler = False
-    val_step_scheduler = True
+    train_step_scheduler = True
+    val_step_scheduler = False
 
     # optimizer
     optimizer = 'Adam'
@@ -44,7 +44,7 @@ class GlobalConfig:
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'},
                         'labelsmoothloss': {'num_class':5, 'smoothing':0.3, 'dim':-1},
-                        'bitemperedloss': {'t1':0.8, 't2':1.8, 'smoothing':0.3},
+                        'bitemperedloss': {'t1':0.8, 't2':2.0, 'smoothing':0.3},
                         'taylorcrossentropy':{'num_class':5, 'smoothing':0.3},
                         'symmetriccrossentropy': {'num_classes':5, 'alpha':0.1, 'beta':1.0}
                         }
@@ -68,6 +68,7 @@ class GlobalConfig:
 
     model = 'effnet'
     model_name = 'tf_efficientnet_b4_ns' #'vit_base_patch16_384' #vit_base_patch32_384'
+    drop_rate = 0.2
     pretrained = True
     swa = False
     swa_ratio = 0.7
