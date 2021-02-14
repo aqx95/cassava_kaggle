@@ -59,7 +59,7 @@ def get_train_transforms(config):
             Transpose(p=0.5),
             ShiftScaleRotate(p=0.5),
             CenterCrop(config.image_size, config.image_size, p=0.5),
-            CLAHE(P=0.4),
+            CLAHE(p=0.4),
             GaussNoise(p=0.4),
             HueSaturationValue(hue_shift_limit=0.2, sat_shift_limit=0.2, val_shift_limit=0.2, p=0.4),
             RandomBrightnessContrast(brightness_limit=(-0.1,0.1), contrast_limit=(-0.1, 0.1), p=0.4),
