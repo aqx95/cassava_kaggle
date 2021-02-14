@@ -4,6 +4,7 @@ import pandas as pd
 from commons import *
 from torch.utils.data import Dataset,DataLoader
 
+from albumentations.augmentations.geometric.rotate import Rotate
 
 from albumentations import (
     HorizontalFlip, VerticalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
@@ -58,6 +59,7 @@ def get_train_transforms(config):
             VerticalFlip(p=0.5),
             Transpose(p=0.5),
             ShiftScaleRotate(p=0.5),
+            Rotate(p=0.5),
             CenterCrop(config.image_size, config.image_size, p=0.5),
             CLAHE(p=0.4),
             GaussNoise(p=0.4),
