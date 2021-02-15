@@ -1,6 +1,6 @@
 # Download Dependencies
 
-timm==0.3.4
+timm==0.4.3
 pydicom==2.1.2
 albumentations==0.5.2
 catalyst==20.12

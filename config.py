@@ -27,6 +27,9 @@ class GlobalConfig:
                 }
 
     # do scheduler.step after optimizer.step
+    warm_up = False
+    warmup_steps = 2
+    total = ?
     train_step_scheduler = True
     val_step_scheduler = False
 

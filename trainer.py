@@ -13,6 +13,7 @@ from commons import cutmix, fmix
 from torchcontrib.optim import SWA
 from torch.optim.swa_utils import AveragedModel, SWALR
 from meter import AverageLossMeter, AccuracyMeter
+from scheduler import WarmupCosineWithHardRestartsSchedule, WarmupCosineSchedule
 
 class Fitter():
     def __init__(self, model, device, config):
@@ -36,9 +37,14 @@ class Fitter():
         self.optimizer = getattr(torch.optim, config.optimizer)(self.model.parameters(),
                                 **config.optimizer_params[config.optimizer])
 
-        self.scheduler = getattr(torch.optim.lr_scheduler, config.scheduler)(optimizer=self.optimizer,
+        if config.warm_up:
+            self.scheduler = WarmupCosineWithHardRestartsSchedule(self.optimizer, config.warmup_steps, config.total)
+            self.config.val_step_scheduler =  True
+            self.config.train_step_scheduler = False
+        else:
+            self.scheduler = getattr(torch.optim.lr_scheduler, config.scheduler)(optimizer=self.optimizer,
                                 **config.scheduler_params[config.scheduler])
-
+                                
         #SWA
         self.swa = config.swa
         if self.swa:
@@ -49,6 +55,7 @@ class Fitter():
             # self.swa_scheduler = SWALR(self.optimizer, anneal_strategy='cos', anneal_epochs=anneal_epoch, swa_lr=1e-4)
 
         self.log("Fitter Class prepared. Training {} with SWA: {} \n".format(self.device, bool(self.swa)))
+
 
     def fit(self, train_loader, valid_loader, fold):
         self.log('Training on Fold {} with {} \n'.format(fold, self.config.model_name))
