@@ -47,9 +47,10 @@ class GlobalConfig:
                                              'ignore_index':-100,'reduce':None,
                                              'reduction':'mean'},
                         'labelsmoothloss': {'num_class':5, 'smoothing':0.3, 'dim':-1},
+                        'focalcosineloss': {'alpha':1, 'gamma':2, 'xcent':0.1},
                         'bitemperedloss': {'t1':0.8, 't2':2.0, 'smoothing':0.3},
                         'taylorcrossentropy':{'num_class':5, 'smoothing':0.3},
-                        'symmetriccrossentropy': {'num_classes':5, 'alpha':0.1, 'beta':1.0}
+                        'symmetriccrossentropy': {'num_classes':5, 'alpha':0.1, 'beta':1.0, 'smoothing':0.0}
                         }
 
     image_size = {'vit' : 384,
