@@ -61,7 +61,8 @@ class NFNet(nn.Module):
     def __init__(self, model_name, n_class, drop_rate=0.0, pretrained=False):
           super().__init__()
           self.model = timm.create_model(model_name, drop_rate=drop_rate, pretrained=pretrained)
-          self.model.head.num_classes = n_class
+          n_features = self.model.head.fc.in_features
+          self.model.head.fc = nn.Linear(n_features, n_class)
 
     def forward(self, x):
         x = self.model(x)
