@@ -11,3 +11,6 @@ python main.py --epochs 15 --criterion bitemperedloss --image-size 600 --model-t
 
 #Vit_base16_384
 python main.py --epochs 15 --criterion labelsmoothloss --image-size 384 --model-type vit --model-name vit_base_patch16_384
+
+#Resnet200d
+python main.py --epochs 15 --criterion labelsmoothloss  --optimizer Adam --image-size 512 --model-type resnet --model-name resnet200d

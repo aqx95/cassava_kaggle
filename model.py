@@ -54,6 +54,20 @@ class Resnet(nn.Module):
         return x
 
 
+class NFNet(nn.Module):
+    """
+    Normalized-Free Nets https://arxiv.org/abs/2102.06171
+    """
+    def __init__(self, model_name, n_class, drop_rate=0.0, pretrained=False):
+          super().__init__()
+          self.model = timm.create_model(model_name, drop_rate=drop_rate, pretrained=pretrained)
+          self.model.head.num_classes = n_class
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
+
 # model factory
 def create_model(config):
     if config.model == "effnet":
@@ -74,4 +88,8 @@ def create_model(config):
     if config.model == 'resnet':
         model_obj = Resnet
         model = Resnet(config.model_name, config.num_classes, config.drop_rate, config.pretrained)
+        return model
+
+    if config.model == 'nfnet':
+        model = NFNet(config.model_name, config.num_classes, config.drop_rate, config.pretrained)
         return model
