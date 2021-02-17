@@ -150,8 +150,8 @@ class Fitter():
                   self.scaler.update()
                   self.optimizer.zero_grad()
 
-                if self.config.train_step_scheduler:
-                    self.scheduler.step(epoch+step/len(train_loader))
+                  if self.config.train_step_scheduler:
+                      self.scheduler.step(epoch+step/len(train_loader))
 
             end_time = time.time()
             if self.config.verbose:
