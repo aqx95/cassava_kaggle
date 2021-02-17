@@ -216,7 +216,7 @@ class Fitter():
                 "epoch": self.epoch,
                 "oof_preds": self.val_predictions,
             },
-            path,
+            path
         )
 
 
