@@ -73,10 +73,11 @@ def get_valid_transforms(config):
 
 def get_test_transforms(config):
     return Compose([
-            CenterCrop(config.image_size, config.image_size),
+            RandomResizedCrop(config.image_size, config.image_size),
             HorizontalFlip(p=0.5),
             VerticalFlip(p=0.5),
             Transpose(p=0.5),
+            CenterCrop(config.image_size, config.image_size),
             Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0, p=1.0),
             ToTensorV2(p=1.0),
         ], p=1.)
