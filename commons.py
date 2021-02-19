@@ -31,26 +31,36 @@ def get_img(path):
     im_rgb = cv2.cvtColor(im_bgr, cv2.COLOR_BGR2RGB) #convert BGR to RGB
     return im_rgb
 
+### Cutmix
+def cutmix(data, target, alpha):
+    indices = torch.randperm(data.size(0))
+    shuffled_data = data[indices]
+    shuffled_target = target[indices]
 
-# def cutmix(img, df, idx, config, transforms=None):
-#     target = df.iloc[idx]['label']
-#     #get random image for mix
-#     cmix_idx = np.random.randint(idx)
-#     shuffle_target =  df.iloc[cmix_idx]['label']
-#     cmix_img = get_img(os.path.join(config.paths['train_path'], df.iloc[cmix_idx]['image_id']))
-#     if transforms:
-#         cmix_img = transforms(image=cmix_img)['image']
-#     #generate bounding box for cutmix
-#     lam = np.clip(np.random.beta(config.cmix_params['alpha'], config.cmix_params['alpha']), 0.3, 0.4)
-#     bbx1, bby1, bbx2, bby2 = rand_bbox((config.image_size, config.image_size), lam)
-#     #cutmix
-#     img[:, bbx1:bbx2, bby1:bby2] = cmix_img[:, bbx1:bbx2, bby1:bby2]
-#
-#     rate = 1 - ((bbx2-bbx1) * (bby2-bby1) / (config.image_size * config.image_size))
-#     targets = (target, shuffle_target, rate)
-#     #target = rate*target + (1.-rate)*
-#
-#     return img, targets
+    lam = np.clip(np.random.beta(alpha, alpha),0.3,0.4)
+    bbx1, bby1, bbx2, bby2 = rand_bbox(data.size(), lam)
+    new_data = data.clone()
+    new_data[:, :, bby1:bby2, bbx1:bbx2] = data[indices, :, bby1:bby2, bbx1:bbx2]
+    # adjust lambda to exactly match pixel ratio
+    lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (data.size()[-1] * data.size()[-2]))
+    targets = (target, shuffled_target, lam)
+
+    return new_data, targets
+
+### Fmix
+def fmix(data, targets, device, alpha, decay_power, shape, max_soft=0.0, reformulate=False):
+    lam, mask = sample_mask(alpha, decay_power, shape, max_soft, reformulate)
+    indices = torch.randperm(data.size(0))
+    shuffled_data = data[indices]
+    shuffled_targets = targets[indices]
+    x1 = torch.from_numpy(mask).to(device)*data
+    x2 = torch.from_numpy(1-mask).to(device)*shuffled_data
+    targets=(targets, shuffled_targets, lam)
+
+    return (x1+x2), targets
+
+
+### ------------------------FMIX Function--------------------------
 def fftfreqnd(h, w=None, z=None):
     """ Get bin values for discrete fourier transform of size (h, w, z)
     :param h: Required, first dimension size
@@ -182,31 +192,3 @@ def sample_mask(alpha, decay_power, shape, max_soft=0.0, reformulate=False):
     mask = binarise_mask(mask, lam, shape, max_soft)
 
     return lam, mask
-
-
-def cutmix(data, target, alpha):
-    indices = torch.randperm(data.size(0))
-    shuffled_data = data[indices]
-    shuffled_target = target[indices]
-
-    lam = np.clip(np.random.beta(alpha, alpha),0.3,0.4)
-    bbx1, bby1, bbx2, bby2 = rand_bbox(data.size(), lam)
-    new_data = data.clone()
-    new_data[:, :, bby1:bby2, bbx1:bbx2] = data[indices, :, bby1:bby2, bbx1:bbx2]
-    # adjust lambda to exactly match pixel ratio
-    lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (data.size()[-1] * data.size()[-2]))
-    targets = (target, shuffled_target, lam)
-
-    return new_data, targets
-
-
-def fmix(data, targets, device, alpha, decay_power, shape, max_soft=0.0, reformulate=False):
-    lam, mask = sample_mask(alpha, decay_power, shape, max_soft, reformulate)
-    indices = torch.randperm(data.size(0))
-    shuffled_data = data[indices]
-    shuffled_targets = targets[indices]
-    x1 = torch.from_numpy(mask).to(device)*data
-    x2 = torch.from_numpy(1-mask).to(device)*shuffled_data
-    targets=(targets, shuffled_targets, lam)
-
-    return (x1+x2), targets
