@@ -16,4 +16,4 @@ python main.py --epochs 15 --criterion labelsmoothloss --image-size 384 --model-
 python main.py --epochs 15 --criterion labelsmoothloss  --optimizer Adam --image-size 512 --model-type resnet --model-name resnet200d
 
 #NFNet
-python main.py --epochs 15 --criterion crossentropy  --optimizer Adam --image-size 512 --model-type nfnet --model-name nf_resnet50
+python main_2019data.py --epochs 15 --criterion crossentropy  --optimizer Adam --image-size 512 --model-type nfnet --model-name nf_resnet50
