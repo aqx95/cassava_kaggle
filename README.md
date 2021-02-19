@@ -5,12 +5,14 @@
 #### Motivation
 Cassava is the second-largest provider of carbohydrates in Africa, a key food security crop grown by smallholder farmers. 80% of household farms in Sub-Saharan Africa grow this starchy root, but viral diseases are major sources of poor yields. By leveraging on vision models, farmers can quickly identify diseased plants, potentially saving their crops before they inflict irreparable damage.
 
+<img src="img/header.png" width='1000' height='500'/>
+
+<br>
+
 ### TLDR;
 My solution is a weighted ensemble of 4 models: **EfficientNetB4**, **Vit_base16**, **Resnet200d** and **NF-Resnet50**. The models are trained on either with or without external data, with the images augmented in the form of Cutmix and Fmix alongside some basic albumentation augmentations. Inference was done with x4 TTA.
 #### Ranking
 149/3947 (Silver)
-
-<br>
 
 ### Dataset
 I would like to thank [@tahsin](https://www.kaggle.com/tahsin) for sharing with the community the merged 2019/2020 dataset. I used the merged data for training my NFNet. I did a stratified KFold only on the 2020 data source, and combine the 2019 data with the training folds to ensure that the 2019 data does not seep into my validation fold, which may affect my CV if there is a shift in input distribution between 2019 and 2020 data.
