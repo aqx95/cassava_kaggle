@@ -20,7 +20,6 @@ class AverageLossMeter:
         self.avg = self.running_total_loss / self.count
 
 
-
 class AccuracyMeter:
     def __init__(self):
         self.reset()
@@ -39,7 +38,6 @@ class AccuracyMeter:
         total_score = self.score * self.batch_size
 
         self.sum += total_score
-
 
     @property
     def avg(self):
