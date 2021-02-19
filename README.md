@@ -105,7 +105,7 @@ Install the dependencies using:
 Configuration settings can be found in `config.py`. Overwriting is allowed for certain common settings through the argparser; check `main.py`.
 To run training:
 ```
-chmod +x run.sh #provide permission for execution
+chmod +x run.sh //provide permission for execution
 ./run.sh #train
 ```
 
