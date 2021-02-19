@@ -6,8 +6,8 @@ python main.py --epochs 15 --criterion symmetriccrossentropy  --optimizer Adam -
 #Inception_resnet_v2
 python main.py --epochs 15 --criterion labelsmoothloss --image-size 512 --model-type resnet --model-name inception_resnet_v2
 
-#EfficientNet B4(600x600)
-python main.py --epochs 15 --criterion bitemperedloss --image-size 600 --model-type effnet --model-name tf_efficientnet_b4_ns
+#EfficientNet B4(512x512)
+python main.py --epochs 15 --criterion labelsmoothloss --image-size 600 --model-type effnet --model-name tf_efficientnet_b4_ns
 
 #Vit_base16_384
 python main.py --epochs 15 --criterion labelsmoothloss --image-size 384 --model-type vit --model-name vit_base_patch16_384
@@ -16,4 +16,4 @@ python main.py --epochs 15 --criterion labelsmoothloss --image-size 384 --model-
 python main.py --epochs 15 --criterion labelsmoothloss  --optimizer Adam --image-size 512 --model-type resnet --model-name resnet200d
 
 #NFNet
-python main_2019data.py --epochs 15 --criterion crossentropy  --optimizer Adam --image-size 512 --model-type nfnet --model-name nf_resnet50
+python main_2019data.py --epochs 15 --criterion focalcosineloss  --optimizer Adam --image-size 512 --model-type nfnet --model-name nf_resnet50
