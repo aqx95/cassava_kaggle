@@ -30,7 +30,7 @@ The models i experimented with (5 folds):
 
 <img src="img/net_correlation.png" width="700" height="600" />
 
-Combining models with different strengths will usually give the best synergies. Thus, i used this correlation matrix to experiment my way into ensembles. I find it interesting that the **ViT model has the least correlation with all other models**. Maybe because of the different underlying operation that creates the receptive field of the image (Convolution vs Attention) ??
+Combining models with different strengths will usually give the best synergy. Thus, i generate a correlation matrix using out-of-fold predictions to experiment my way into ensembles. I find it interesting that the **ViT model has the least correlation with all other models**. Maybe because of the different underlying operation that creates the receptive field of the image (Convolution vs Attention) ??
 
 
 #### Ensemble
