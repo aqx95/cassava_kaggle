@@ -103,10 +103,13 @@ Install the dependencies using:
 *Have to separately install latest of version of `timm` using `!pip install git+https://github.com/rwightman/pytorch-image-models.git` for training NFNets
 ##### Configuration & Train
 Configuration settings can be found in `config.py`. Overwriting is allowed for certain common settings through the argparser; check `main.py`.
-To run training:
+1. Provide permission for execution
 ```
-chmod +x run.sh //provide permission for execution
-./run.sh #train
+chmod +x run.sh 
+```
+2. Run training
+```
+./run.sh
 ```
 
 #### Method 2. Train in Google Colab
