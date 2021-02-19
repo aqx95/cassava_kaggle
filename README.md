@@ -94,17 +94,17 @@ To reproduce the results for single model, you will have to first download the d
 * [2020 data](https://www.kaggle.com/c/cassava-leaf-disease-classification)
 * [Merged data](https://www.kaggle.com/tahsin/cassava-leaf-disease-merged)
 
-#### Download Dependencies
-Download the dependencies using:
+#### Method 1. Train in local machine
+##### Download required libraries
+Install the dependencies using:
 ```
 !pip install -r requirements.txt
 ```
 *Have to separately install latest of version of `timm` using `!pip install git+https://github.com/rwightman/pytorch-image-models.git` for training NFNets
-
-#### 1. Train in local machine
+##### Configuration & Train
 Configuration settings can be found in `config.py`. Overwriting is allowed for certain common settings through the argparser; check `main.py`.
 To train, run:
 `./run.sh`
 
-#### 2. Train in Google Colab
+#### Method 2. Train in Google Colab
 Run the cells in `colab.ipynb` and change the arguments accordingly under training (using `run.sh` as reference).
