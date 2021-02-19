@@ -40,7 +40,7 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
 
-
+#Prepare kfold
 def make_folds(train_csv, config):
     df_folds = train_csv.copy()
     skf = StratifiedKFold(n_splits=config.num_folds, shuffle=True, random_state=config.seed).split(
@@ -51,7 +51,7 @@ def make_folds(train_csv, config):
 
     return df_folds
 
-
+#Train single fold
 def train_on_fold(df_folds, config, device, fold):
     model = create_model(config).to(device)
     train_df = df_folds[df_folds["fold"] != fold].reset_index(drop=True)
@@ -102,7 +102,7 @@ def get_confusion_matrix(config, result_df, normalize=True):
     confusion_plot = sns.heatmap(df_cm, cmap="Blues", annot=True,annot_kws={"size": 16})
     confusion_plot.figure.savefig(os.path.join(config.paths["save_path"],config.model+'.png'))
 
-
+#Train folds
 def train_loop(df_folds: pd.DataFrame, config, device, fold_num: int = None, train_one_fold=False):
     """Perform the training loop on all folds."""
     # here The CV score is the average of the validation fold metric.
