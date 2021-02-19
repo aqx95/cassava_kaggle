@@ -1,6 +1,7 @@
 import timm
 import torch.nn as nn
 
+
 class Effnet(nn.Module):
     """
     EfficientNet model by https://arxiv.org/pdf/1905.11946.pdf
