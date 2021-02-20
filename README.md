@@ -12,7 +12,7 @@ Cassava is the second-largest provider of carbohydrates in Africa, a key food se
 ### TLDR;
 My solution is a weighted ensemble of 4 models: **EfficientNet**, **VisionTransformers**, **Resnet** and **NFNet**. The models are trained on either with or without external data, with the images augmented in the form of Cutmix and Fmix alongside some basic albumentation augmentations. Inference was done with x4 TTA.
 #### Ranking
-149/3947 (Silver)
+137/3900 (Silver)
 
 ### Dataset
 NFNet trained with merged data. I did a stratified KFold only on the 2020 data source, and combine the 2019 data with the training folds to ensure that the 2019 data does not seep into my validation fold, which may affect my CV if there is a shift in input distribution between 2019 and 2020 data.
